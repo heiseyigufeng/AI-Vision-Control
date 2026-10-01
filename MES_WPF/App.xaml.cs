@@ -75,14 +75,27 @@ namespace MES_WPF
             // 创建包含LoginView的窗口
             var loginWindow = new Window
             {
-                Title = "登录 - MES系统",
+                Title = "F12 AI Vision",
                 Content = loginView,
-                Width = 400,
-                Height = 300,
+                Width = 460,
+                Height = 600,
+                MinWidth = 460,
+                MaxWidth = 460,
+                MinHeight = 600,
+                MaxHeight = 600,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                ResizeMode = ResizeMode.NoResize
+                ResizeMode = ResizeMode.NoResize,
+                WindowStyle = WindowStyle.None,
+                AllowsTransparency = true,
+                Background = System.Windows.Media.Brushes.Transparent
             };
-
+            loginWindow.MouseLeftButtonDown += (s, e) =>
+            {
+                if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
+                {
+                    loginWindow.DragMove();
+                }
+            };
             // 添加登录完成事件处理
             bool loginSuccess = false;
             loginViewModel.LoginCompleted += (sender, success) =>
