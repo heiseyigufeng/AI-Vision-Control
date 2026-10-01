@@ -89,12 +89,3 @@ MES_WPF是一个基于WPF开发的现代化制造执行系统(Manufacturing Exec
 
 
 
-## 许可证
-
-[MIT](LICENSE)
-
-## 联系方式
-
-如有任何问题或建议，请通过以下方式联系我们：
-- 项目主页：[https://github.com/baitianbt/MES_WPF]
-- 电子邮件：[1749492810@qq.com]
