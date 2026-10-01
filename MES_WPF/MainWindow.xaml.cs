@@ -49,16 +49,19 @@ namespace MES_WPF
                     {
                         navService.SetContentControl(contentControl);
                         
-                        // 加载DashboardView
-                        var dashboardView = App.GetService<DashboardView>();
-                        dashboardView.DataContext = App.GetService<DashboardViewModel>();
-                        _menuViewModel.MainContent = dashboardView;
+                        //// 加载DashboardView
+                        //var dashboardView = App.GetService<DashboardView>();
+                        //dashboardView.DataContext = App.GetService<DashboardViewModel>();
+                        //_menuViewModel.MainContent = dashboardView;
+
+                        // 加载 HomeView
+                        _menuViewModel.MainContent = new HomeView();
                     }
                 };
             }
             
             // 初始化数据
-            InitializeData();
+          //  InitializeData();
         }
 
         private void InitializeData()

@@ -236,7 +236,7 @@
                 </Grid.RowDefinitions>
                 
                 <!-- 系统标题 -->
-                <TextBlock Grid.Row="0" Text="MES系统" FontSize="20" FontWeight="Bold" 
+                <TextBlock Grid.Row="0" Text="F12 AI Vision" FontSize="20" FontWeight="Bold" 
                            Foreground="White" VerticalAlignment="Center" Margin="20,0,0,0"/>
                 
                 <!-- 导航菜单 -->

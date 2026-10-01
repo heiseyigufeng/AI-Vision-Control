@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\First.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Resources\AIT.ico" />
   </ItemGroup>
 
@@ -32,6 +36,10 @@
 
   <ItemGroup>
     <Folder Include="Resources\Icons\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\First.png" />
   </ItemGroup>
 
 </Project>

@@ -32,7 +32,7 @@ namespace MES_WPF.ViewModels
             set => SetProperty(ref _selectedMenuItem, value);
         }
 
-        private string _currentMenuTitle = "首页";
+        private string _currentMenuTitle = "Home";
         /// <summary>
         /// 当前菜单标题
         /// </summary>
@@ -42,7 +42,7 @@ namespace MES_WPF.ViewModels
             set => SetProperty(ref _currentMenuTitle, value);
         }
 
-        private string _currentSubMenuTitle = "系统首页";
+        private string _currentSubMenuTitle = "System Home";
         /// <summary>
         /// 当前子菜单标题
         /// </summary>
@@ -87,15 +87,25 @@ namespace MES_WPF.ViewModels
         private void InitializeMenuItems()
         {
             // 系统首页
-            var dashboardItem = new MenuItemModel
+            //var dashboardItem = new MenuItemModel
+            //{
+            //    Title = "系统首页",
+            //    Icon = PackIconKind.ViewDashboard,
+            //    ViewName = "DashboardView",
+            //    IsSelected = true
+            //};
+            //dashboardItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(dashboardItem));
+            //MenuItems.Add(dashboardItem);
+
+            var HomeItem = new MenuItemModel
             {
-                Title = "系统首页",
+                Title = "Home",
                 Icon = PackIconKind.ViewDashboard,
-                ViewName = "DashboardView",
+                ViewName = "HomeView",
                 IsSelected = true
             };
-            dashboardItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(dashboardItem));
-            MenuItems.Add(dashboardItem);
+            HomeItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(HomeItem));
+            MenuItems.Add(HomeItem);
 
             // 基础数据
             var BasicItem = new MenuItemModel
@@ -187,7 +197,7 @@ namespace MES_WPF.ViewModels
             MenuItems.Add(systemItem);
 
             // 设置默认选中项
-            SelectedMenuItem = dashboardItem;
+            SelectedMenuItem = HomeItem;
         }
 
         /// <summary>

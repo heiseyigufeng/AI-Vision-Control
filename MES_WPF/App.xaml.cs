@@ -269,6 +269,7 @@ namespace MES_WPF
             services.AddTransient<LoginView>();
             services.AddTransient<MainWindow>();
             services.AddTransient<DashboardView>();
+            services.AddTransient<HomeView>();
             services.AddTransient<UserManagementView>();
         }
 
