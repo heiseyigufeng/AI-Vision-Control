@@ -9,6 +9,8 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
         Title="F12 AI Vision" Height="1080" Width="1920"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextElement.FontSize="13"
@@ -373,7 +375,7 @@
                 <!-- 用户信息 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
                     <materialDesign:PackIcon Kind="Account" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="管理员" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Administrator" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 </StackPanel>
             </Grid>
             
