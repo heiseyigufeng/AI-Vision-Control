@@ -36,10 +36,17 @@
 
   <ItemGroup>
     <Folder Include="Resources\Icons\" />
+    <Folder Include="ViewModels\ProductionManagement\" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Assets\First.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Views\ProductionManagement\LabelInversionManualView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

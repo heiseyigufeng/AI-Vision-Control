@@ -107,94 +107,96 @@ namespace MES_WPF.ViewModels
             HomeItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(HomeItem));
             MenuItems.Add(HomeItem);
 
-            // 基础数据
-            var BasicItem = new MenuItemModel
-            {
-                Title = "基础信息",
-                Icon = PackIconKind.Factory,
-                ViewName = "ProductionView"
-            };
-            BasicItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(BasicItem));
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "BOM管理", ViewName = "BOMView" });
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "设备管理", ViewName = "EquipmentView" });
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "操作管理", ViewName = "OperationView" });
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "工序管理", ViewName = "ProcessRouteView" });
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "产品管理", ViewName = "ProductView" });
-            BasicItem.SubItems.Add(new MenuItemModel { Title = "资源信息管理", ViewName = "ResourceView" });
-            MenuItems.Add(BasicItem);
+            //// 基础数据
+            //var BasicItem = new MenuItemModel
+            //{
+            //    Title = "基础信息",
+            //    Icon = PackIconKind.Factory,
+            //    ViewName = "ProductionView"
+            //};
+            //BasicItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(BasicItem));
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "BOM管理", ViewName = "BOMView" });
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "设备管理", ViewName = "EquipmentView" });
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "操作管理", ViewName = "OperationView" });
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "工序管理", ViewName = "ProcessRouteView" });
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "产品管理", ViewName = "ProductView" });
+            //BasicItem.SubItems.Add(new MenuItemModel { Title = "资源信息管理", ViewName = "ResourceView" });
+            //MenuItems.Add(BasicItem);
 
             // 生产管理
             var productionItem = new MenuItemModel
             {
-                Title = "生产管理",
+                Title = "ProductionManagement",
                 Icon = PackIconKind.Factory,
-                ViewName = "ProductionView"
+                ViewName = "LabelInversionView"
             };
             productionItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(productionItem));
-            productionItem.SubItems.Add(new MenuItemModel { Title = "生产计划", ViewName = "ProductionPlanView" });
-            productionItem.SubItems.Add(new MenuItemModel { Title = "生产执行", ViewName = "ProductionExecutionView" });
-            productionItem.SubItems.Add(new MenuItemModel { Title = "生产报表", ViewName = "ProductionReportView" });
+            //productionItem.SubItems.Add(new MenuItemModel { Title = "生产计划", ViewName = "ProductionPlanView" });
+            //productionItem.SubItems.Add(new MenuItemModel { Title = "生产执行", ViewName = "ProductionExecutionView" });
+            //productionItem.SubItems.Add(new MenuItemModel { Title = "生产报表", ViewName = "ProductionReportView" });
+            productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionView", ViewName = "LabelInversionView" });
+            productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionManualView", ViewName = "LabelInversionManualView" });
             MenuItems.Add(productionItem);
 
-            // 设备管理
-            var equipmentItem = new MenuItemModel
-            {
-                Title = "设备管理",
-                Icon = PackIconKind.Tools,
-                ViewName = "EquipmentView"
-            };
-            equipmentItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(equipmentItem));
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护执行", ViewName = "MaintenanceExecutionView" });
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护项目", ViewName = "MaintenanceItemView" });
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护订单", ViewName = "MaintenanceOrderView" });
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "设备维护计划", ViewName = "MaintenancePlanView" });
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "参数日志", ViewName = "MaintenanceItemView" });
-            equipmentItem.SubItems.Add(new MenuItemModel { Title = "备件仓", ViewName = "SpareView" });
-            MenuItems.Add(equipmentItem);
+            //// 设备管理
+            //var equipmentItem = new MenuItemModel
+            //{
+            //    Title = "设备管理",
+            //    Icon = PackIconKind.Tools,
+            //    ViewName = "EquipmentView"
+            //};
+            //equipmentItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(equipmentItem));
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护执行", ViewName = "MaintenanceExecutionView" });
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护项目", ViewName = "MaintenanceItemView" });
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "维护订单", ViewName = "MaintenanceOrderView" });
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "设备维护计划", ViewName = "MaintenancePlanView" });
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "参数日志", ViewName = "MaintenanceItemView" });
+            //equipmentItem.SubItems.Add(new MenuItemModel { Title = "备件仓", ViewName = "SpareView" });
+            //MenuItems.Add(equipmentItem);
 
-            // 物料管理
-            var materialsItem = new MenuItemModel
-            {
-                Title = "物料管理",
-                Icon = PackIconKind.Package,
-                ViewName = "MaterialsView"
-            };
-            materialsItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(materialsItem));
-            materialsItem.SubItems.Add(new MenuItemModel { Title = "物料库存", ViewName = "MaterialsInventoryView" });
-            materialsItem.SubItems.Add(new MenuItemModel { Title = "物料采购", ViewName = "MaterialsPurchaseView" });
-            materialsItem.SubItems.Add(new MenuItemModel { Title = "物料出入库", ViewName = "MaterialsInOutView" });
-            MenuItems.Add(materialsItem);
+            //// 物料管理
+            //var materialsItem = new MenuItemModel
+            //{
+            //    Title = "物料管理",
+            //    Icon = PackIconKind.Package,
+            //    ViewName = "MaterialsView"
+            //};
+            //materialsItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(materialsItem));
+            //materialsItem.SubItems.Add(new MenuItemModel { Title = "物料库存", ViewName = "MaterialsInventoryView" });
+            //materialsItem.SubItems.Add(new MenuItemModel { Title = "物料采购", ViewName = "MaterialsPurchaseView" });
+            //materialsItem.SubItems.Add(new MenuItemModel { Title = "物料出入库", ViewName = "MaterialsInOutView" });
+            //MenuItems.Add(materialsItem);
 
-            // 质量管理
-            var qualityItem = new MenuItemModel
-            {
-                Title = "质量管理",
-                Icon = PackIconKind.CheckCircle,
-                ViewName = "QualityView"
-            };
-            qualityItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(qualityItem));
-            qualityItem.SubItems.Add(new MenuItemModel { Title = "质量检验", ViewName = "QualityInspectionView" });
-            qualityItem.SubItems.Add(new MenuItemModel { Title = "不良品管理", ViewName = "DefectiveProductView" });
-            qualityItem.SubItems.Add(new MenuItemModel { Title = "质量报表", ViewName = "QualityReportView" });
-            MenuItems.Add(qualityItem);
+            //// 质量管理
+            //var qualityItem = new MenuItemModel
+            //{
+            //    Title = "质量管理",
+            //    Icon = PackIconKind.CheckCircle,
+            //    ViewName = "QualityView"
+            //};
+            //qualityItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(qualityItem));
+            //qualityItem.SubItems.Add(new MenuItemModel { Title = "质量检验", ViewName = "QualityInspectionView" });
+            //qualityItem.SubItems.Add(new MenuItemModel { Title = "不良品管理", ViewName = "DefectiveProductView" });
+            //qualityItem.SubItems.Add(new MenuItemModel { Title = "质量报表", ViewName = "QualityReportView" });
+            //MenuItems.Add(qualityItem);
 
-            // 系统管理
-            var systemItem = new MenuItemModel
-            {
-                Title = "系统管理",
-                Icon = PackIconKind.Cog,
-                ViewName = "SystemView"
-            };
-            systemItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(systemItem));
-            systemItem.SubItems.Add(new MenuItemModel { Title = "用户管理", ViewName = "UserManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "角色管理", ViewName = "RoleManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "员工管理", ViewName = "EmployeeManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "部门管理", ViewName = "DepartmentManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "权限设置", ViewName = "PermissionManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "系统设置", ViewName = "SystemConfigManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "数据字典", ViewName = "DictionaryManagementView" });
-            systemItem.SubItems.Add(new MenuItemModel { Title = "操作日志", ViewName = "OperationLogManagementView" });
-            MenuItems.Add(systemItem);
+            //// 系统管理
+            //var systemItem = new MenuItemModel
+            //{
+            //    Title = "系统管理",
+            //    Icon = PackIconKind.Cog,
+            //    ViewName = "SystemView"
+            //};
+            //systemItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(systemItem));
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "用户管理", ViewName = "UserManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "角色管理", ViewName = "RoleManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "员工管理", ViewName = "EmployeeManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "部门管理", ViewName = "DepartmentManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "权限设置", ViewName = "PermissionManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "系统设置", ViewName = "SystemConfigManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "数据字典", ViewName = "DictionaryManagementView" });
+            //systemItem.SubItems.Add(new MenuItemModel { Title = "操作日志", ViewName = "OperationLogManagementView" });
+            //MenuItems.Add(systemItem);
 
             // 设置默认选中项
             SelectedMenuItem = HomeItem;

@@ -25,6 +25,7 @@ using MES_WPF.Core.Services.EquipmentManagement;
 using MES_WPF.Data.Repositories.EquipmentManagement;
 using MES_WPF.ViewModels.EquipmentManagement;
 using MES_WPF.Views.EquipmentManagement;
+using MES_WPF.Views.ProductionManagement;
 
 namespace MES_WPF
 {
@@ -257,6 +258,11 @@ namespace MES_WPF
             services.AddSingleton<PermissionManagementView>();
             services.AddSingleton<RoleManagementView>();
             services.AddSingleton<SystemConfigManagementView>();
+
+            // 注册生产管理模块
+            services.AddTransient<LabelInversionView>();
+            services.AddTransient<LabelInversionManualView>();
+
 
             // 基础信息模块视图
             services.AddSingleton<BOMView>();
