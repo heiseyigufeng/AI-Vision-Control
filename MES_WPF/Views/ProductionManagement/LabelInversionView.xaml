@@ -5,207 +5,376 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
-             d:DesignHeight="800" d:DesignWidth="1400">
+             d:DesignHeight="800"
+             d:DesignWidth="1400">
 
-    <Grid Background="#2F4156" Margin="8">
+    <Grid Background="#2F4156"
+          Margin="8">
         <Grid.RowDefinitions>
             <!-- 第1行：顶部信息栏 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 第2行：条码 + OK -->
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <!-- 第2行：条码 + 输入框 + OK -->
+            <RowDefinition Height="Auto" />
             <!-- 第3行：标题栏 -->
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
             <!-- 第4行：主内容区上半部分 -->
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
             <!-- 第5行：主内容区下半部分 -->
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
             <!-- 第6行：操作日志 -->
-            <RowDefinition Height="Auto"/>
-            <!-- 第7行：状态栏 -->
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- ===== 第1行：顶部信息栏 ===== -->
-        <Border Grid.Row="0" BorderBrush="#2196F3" BorderThickness="1"
-                Background="#0F2438" Margin="0,0,0,6" Padding="8,6">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <Border Grid.Row="0"
+                BorderBrush="#2196F3"
+                BorderThickness="1"
+                Background="#0F2438"
+                Margin="0,0,0,6"
+                Padding="6,4">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="WO:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBox Text="9910300K6247" Foreground="White" Background="#0F2438"         BorderBrush="#2196F3" BorderThickness="1"         FontSize="14" Width="150" Height="26"
-         Margin="8,0,0,0" VerticalAlignment="Center"
-         Padding="4,0"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal">
+                        <TextBlock Text="WO:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBox Text="9910300K6247"
+                                 Foreground="White"
+                                 Background="#0F2438"
+                                 BorderBrush="#2196F3"
+                                 BorderThickness="1"
+                                 FontSize="12"
+                                 Width="120"
+                                 Height="24"
+                                 Margin="6,0,0,0"
+                                 VerticalAlignment="Center"
+                                 Padding="4,0" />
+                    </StackPanel>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <TextBlock Text="Model:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBlock Text="20-CP101RS07" Foreground="White" FontSize="14"
-                               Margin="8,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <TextBlock Text="Model:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="20-CP101RS07"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   Margin="6,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <TextBlock Text="Model:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBlock Text="20-CP101RS07_Rework" Foreground="White" FontSize="14"
-                               Margin="8,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <TextBlock Text="Model:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="20-CP101RS07_Rework"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   Margin="6,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
 
-                <StackPanel Grid.Column="3" Orientation="Horizontal">
-                    <TextBlock Text="Line:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBlock Text="A16" Foreground="White" FontSize="14"
-                               Margin="8,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="3"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <TextBlock Text="Line:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="A16"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   Margin="6,0,0,0"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
 
-                <StackPanel Grid.Column="4" Orientation="Horizontal">
-                    <TextBlock Text="Process:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <ComboBox Width="150" Height="28" Margin="8,0,0,0"
-          Background="#0F2438" Foreground="White"
-          BorderBrush="#2196F3" BorderThickness="1"
-          VerticalAlignment="Center"
-          SelectedIndex="0">
-                        <ComboBoxItem Content="INPUT" Foreground="White" Background="#0F2438"/>
-                        <ComboBoxItem Content="OBD_LabelCheck" Foreground="White" Background="#0F2438"/>
-                        <ComboBoxItem Content="Peel-off" Foreground="White" Background="#0F2438"/>
-                    </ComboBox>
-                </StackPanel>
+                    <StackPanel Grid.Column="4"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <TextBlock Text="Process:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <ComboBox Width="120"
+                                  Height="24"
+                                  Margin="6,0,0,0"
+                                  Background="#0F2438"
+                                  Foreground="White"
+                                  BorderBrush="#2196F3"
+                                  BorderThickness="1"
+                                  FontSize="12"
+                                  VerticalAlignment="Center"
+                                  SelectedIndex="0">
+                            <ComboBoxItem Content="INPUT"
+                                          Foreground="White"
+                                          Background="#0F2438" />
+                            <ComboBoxItem Content="OBD_LabelCheck"
+                                          Foreground="White"
+                                          Background="#0F2438" />
+                            <ComboBoxItem Content="Peel-off"
+                                          Foreground="White"
+                                          Background="#0F2438" />
+                        </ComboBox>
+                    </StackPanel>
 
-                <StackPanel Grid.Column="5" Orientation="Horizontal">
-                    <TextBlock Text="Confidence:" Foreground="#8FA3BF" FontSize="14" VerticalAlignment="Center"/>
-                    <TextBox Text="0.66" Foreground="White" Background="#0F2438"         BorderBrush="#2196F3" BorderThickness="1"         FontSize="14" Width="150" Height="26"
-Margin="8,0,0,0" VerticalAlignment="Center"
-Padding="4,0"/>
-                </StackPanel>
-            </Grid>
+                    <StackPanel Grid.Column="5"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <TextBlock Text="Confidence:"
+                                   Foreground="#8FA3BF"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                        <TextBox Text="0.66"
+                                 Foreground="White"
+                                 Background="#0F2438"
+                                 BorderBrush="#2196F3"
+                                 BorderThickness="1"
+                                 FontSize="12"
+                                 Width="60"
+                                 Height="24"
+                                 Margin="6,0,0,0"
+                                 VerticalAlignment="Center"
+                                 Padding="4,0" />
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
         </Border>
 
-        <!-- ===== 第2行：条码 + OK ===== -->
-        <Grid Grid.Row="1" Margin="0,0,0,6">
+        <!-- ===== 第2行：条码 + 输入框 + OK ===== -->
+        <Grid Grid.Row="1"
+              Margin="0,0,0,6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="8*" />
+                <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 条码占位 -->
-            <Border Grid.Column="0" BorderBrush="#2196F3" BorderThickness="1"
-                    Background="#0F2438" Height="60" Width="100"
-                    HorizontalAlignment="Left">
-                <materialDesign:PackIcon Kind="Barcode" Width="60" Height="40"
+            <!-- 第1列：条码 -->
+            <Border Grid.Column="0"
+                    BorderBrush="#2196F3"
+                    BorderThickness="1"
+                    Background="#0F2438"
+                    Height="50">
+                <materialDesign:PackIcon Kind="Qrcode"
+                                         Width="30"
+                                         Height="30"
                                          Foreground="#2196F3"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
             </Border>
 
-            <!-- OK 状态 -->
-            <Border Grid.Column="1" BorderBrush="#4CAF50" BorderThickness="2"
-         Background="#0F2F1A" Height="60" Margin="10,0,0,0" HorizontalAlignment="Right" Width="150">
-                <TextBox Text="0.66" Foreground="White" Background="White"         BorderBrush="#2196F3" BorderThickness="1"         FontSize="14" Width="150" Height="26"
-Margin="8,0,0,0" VerticalAlignment="Center"
-Padding="4,0"/>
-            </Border>
+            <!-- 第2列：输入框 -->
+            <TextBox Grid.Column="1"
+                     Text=""
+                     Foreground="White"
+                     Background="#0F2438"
+                     BorderBrush="#2196F3"
+                     BorderThickness="1"
+                     FontSize="18"
+                     Height="50"
+                     Margin="6,0"
+                     VerticalContentAlignment="Center"
+                     Padding="8,0" />
 
-            <!-- OK 状态 -->
-            <Border Grid.Column="2" BorderBrush="#4CAF50" BorderThickness="2"
-                    Background="#0F2F1A" Height="60" Margin="10,0,0,0" HorizontalAlignment="Right" Width="150">
-                <TextBlock Text="OK" FontSize="36" FontWeight="Bold"
+            <!-- 第3列：OK 状态 -->
+            <Border Grid.Column="2"
+                    BorderBrush="#4CAF50"
+                    BorderThickness="2"
+                    Background="#0F2F1A"
+                    Height="50">
+                <TextBlock Text="OK"
+                           FontSize="24"
+                           FontWeight="Bold"
                            Foreground="#4CAF50"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
             </Border>
         </Grid>
 
         <!-- ===== 第3行：标题栏 ===== -->
-        <Grid Grid.Row="2" Margin="0,0,0,6">
+        <Grid Grid.Row="2"
+              Margin="0,0,0,6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="Camera:" Foreground="White" FontSize="16"/>
-            <TextBlock Grid.Column="1" Text="Detection: Pictures\Screenshot\picture1.jpeg"
-                       Foreground="White" FontSize="14" HorizontalAlignment="Right"/>
+            <!-- 左侧：Camera -->
+            <TextBlock Grid.Column="0"
+                       Text="Camera"
+                       Foreground="White"
+                       FontSize="14"
+                       VerticalAlignment="Center" />
+
+            <!-- 中间：Delay Time + 输入框 -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Left"
+                        Margin="30,0,0,0"
+                        VerticalAlignment="Center">
+                <TextBlock Text="Delay Time:"
+                           Foreground="White"
+                           FontSize="14"
+                           VerticalAlignment="Center" />
+                <TextBox Text="1.0"
+                         Width="150"
+                         Height="24"
+                         Margin="6,0,0,0"
+                         Background="#0F2438"
+                         Foreground="White"
+                         BorderBrush="#2196F3"
+                         BorderThickness="1"
+                         FontSize="14"
+                         VerticalContentAlignment="Center"
+                         Padding="4,0" />
+            </StackPanel>
         </Grid>
 
         <!-- ===== 第4~5行：主内容区 ===== -->
-        <Grid Grid.Row="3" Grid.RowSpan="2">
+        <Grid Grid.Row="3"
+              Grid.RowSpan="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
             <!-- 左侧：相机实时画面 -->
-            <Border Grid.Column="0" BorderBrush="#2196F3" BorderThickness="1"
-                    Background="#0F2438" Margin="0,0,6,0">
+            <Border Grid.Column="0"
+                    BorderBrush="#2196F3"
+                    BorderThickness="1"
+                    Background="#0F2438"
+                    Margin="0,0,6,0">
                 <Grid>
-                    <TextBlock Text="Real-time camera feed" Foreground="White"
-                               FontSize="24"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="Real-time camera"
+                               Foreground="White"
+                               FontSize="20"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
                     <!-- 实际接入相机时，把 Image 放这里：
                     <Image x:Name="CameraImage" Stretch="Uniform"/>
                     -->
                 </Grid>
             </Border>
 
-            <!-- 右侧：两张检测结果图 -->
+            <!-- 右侧：一张拍照图，一张检测图 -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
+                <!-- 拍照图路径 -->
+                <Grid Grid.Row="0"
+                      Margin="0,0,0,2">
+                    <TextBlock Text="Orig Path: Pictures\Screenshot\picture1.jpeg"
+                               Foreground="#8FA3BF"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Right"
+                               TextTrimming="CharacterEllipsis" />
+                </Grid>
+
                 <!-- 拍照图 -->
-                <Grid Grid.Row="0" Margin="0,0,0,3">
+                <Grid Grid.Row="1"
+                      Margin="0,0,0,3">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" BorderBrush="#2196F3" BorderThickness="1"
+                    <Border Grid.Column="0"
+                            BorderBrush="#2196F3"
+                            BorderThickness="1"
                             Background="#0F2438">
-                        <TextBlock Text="Photo" Foreground="White"
-                                   FontSize="24"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="Photo"
+                                   Foreground="White"
+                                   FontSize="20"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
                     </Border>
-                    <Button Grid.Column="1" Content="open"
-                            Width="60" Height="40" Margin="6,0,0,0"
-                            Background="#1565A8" Foreground="White"
-                            BorderThickness="0"/>
+                    <Button Grid.Column="1"
+                            Content="open"
+                            Width="50"
+                            Height="30"
+                            Margin="6,0,0,0"
+                            Background="#1565A8"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontSize="12" />
+                </Grid>
+
+                <!-- 侦测图路径 -->
+                <Grid Grid.Row="2"
+                      Margin="0,3,0,2">
+                    <TextBlock Text="Result Path: Pictures\Screenshot\picture1.jpeg"
+                               Foreground="#8FA3BF"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Right"
+                               TextTrimming="CharacterEllipsis" />
                 </Grid>
 
                 <!-- 侦测结果图 -->
-                <Grid Grid.Row="1" Margin="0,3,0,0">
+                <Grid Grid.Row="3"
+                      Margin="0,0,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" BorderBrush="#2196F3" BorderThickness="1"
+                    <Border Grid.Column="0"
+                            BorderBrush="#2196F3"
+                            BorderThickness="1"
                             Background="#0F2438">
-                        <TextBlock Text="Detection result image" Foreground="White"
-                                   FontSize="24"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBlock Text="Detection image"
+                                   Foreground="White"
+                                   FontSize="20"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
                     </Border>
-                    <Button Grid.Column="1" Content="open"
-                            Width="60" Height="40" Margin="6,0,0,0"
-                            Background="#1565A8" Foreground="White"
-                            BorderThickness="0"/>
+                    <Button Grid.Column="1"
+                            Content="open"
+                            Width="50"
+                            Height="30"
+                            Margin="6,0,0,0"
+                            Background="#1565A8"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontSize="12" />
                 </Grid>
             </Grid>
         </Grid>
 
         <!-- ===== 第6行：操作日志 ===== -->
-        <Border Grid.Row="5" BorderBrush="#2196F3" BorderThickness="1"
-                Background="#0F2438" Margin="0,6,0,0" MinHeight="80">
-            <TextBlock Text="operate log" Foreground="#8FA3BF"
-                       FontSize="16"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Border>
-
-        <!-- ===== 第7行：状态栏 ===== -->
-        <Border Grid.Row="6" Background="#0F2438" Margin="0,6,0,0" Padding="8,4">
-            <TextBlock Text="就绪" Foreground="#8FA3BF" FontSize="12"/>
+        <Border Grid.Row="6"
+                BorderBrush="#2196F3"
+                BorderThickness="1"
+                Background="#0F2438"
+                Margin="0,6,0,0"
+                MinHeight="60">
+            <TextBlock Text="operate log"
+                       Foreground="#8FA3BF"
+                       FontSize="14"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
         </Border>
 
     </Grid>

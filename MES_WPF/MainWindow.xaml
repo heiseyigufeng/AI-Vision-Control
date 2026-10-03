@@ -352,7 +352,7 @@
             </Grid.RowDefinitions>
             
             <!-- 顶部工具栏 -->
-            <Grid Grid.Row="0" Background="White">
+            <Grid Grid.Row="0" Background="#2F4156">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -367,7 +367,7 @@
                 
                 <!-- 当前位置 -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding CurrentMenuTitle}" VerticalAlignment="Center" FontSize="14"/>
+                    <TextBlock Text="{Binding CurrentMenuTitle}" VerticalAlignment="Center" FontSize="14" Foreground="White"/>
                     <TextBlock Text=" / " VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="14"/>
                     <TextBlock Text="{Binding CurrentSubMenuTitle}" VerticalAlignment="Center" Foreground="#AAAAAA" FontSize="14"/>
                 </StackPanel>
@@ -375,7 +375,7 @@
                 <!-- 用户信息 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
                     <materialDesign:PackIcon Kind="Account" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="Administrator" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Administrator" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="White"/>
                 </StackPanel>
             </Grid>
             
