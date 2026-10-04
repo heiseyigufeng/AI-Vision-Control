@@ -290,7 +290,6 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center">
 
-                
             </StackPanel>
         </Grid>
 
@@ -332,7 +331,8 @@
                 <!-- 拍照图路径 -->
                 <Grid Grid.Row="0"
                       Margin="0,0,0,2">
-                    <TextBlock Text="Orig Path: Pictures\Screenshot\picture1.jpeg"
+                    <TextBlock x:Name="OrigPathText"
+                        Text="Orig Path: Pictures\Screenshot\picture1.jpeg"
                                Foreground="#8FA3BF"
                                FontSize="12"
                                VerticalAlignment="Center"
@@ -350,22 +350,51 @@
                     <Border Grid.Column="0"
                             BorderBrush="#2196F3"
                             BorderThickness="1"
-                            Background="#0F2438">
-                        <TextBlock Text="Photo"
-                                   Foreground="White"
-                                   FontSize="20"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
+                            Background="#0F2438"  >
+                        <Grid>
+                            <!-- 占位文字，有图时隐藏 -->
+                            <TextBlock x:Name="PhotoPlaceholder"
+                                       Text="Photo"
+                                       Foreground="White"
+                                       FontSize="20"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+
+                            <!-- 图片显示控件 -->
+                            <Image x:Name="PhotoImage"
+                                   Stretch="Uniform"
+                                   Visibility="Collapsed" />
+                        </Grid>
                     </Border>
-                    <Button Grid.Column="1"
-                            Content="open"
-                            Width="50"
-                            Height="30"
-                            Margin="6,0,0,0"
-                            Background="#1565A8"
-                            Foreground="White"
-                            BorderThickness="0"
-                            FontSize="8" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Vertical"
+                                VerticalAlignment="Center"
+                                Margin="6,0,0,0">
+
+                        <Button x:Name="Btn_Load"
+                                Content="Load"
+                                Width="40"
+                                Height="30"
+                                Margin="0,3"
+                                HorizontalContentAlignment="Left"
+                                Padding="5"
+                                Background="#1565A8"
+                                Foreground="White"
+                                BorderThickness="0"
+                                FontSize="12"
+                                Click="Btn_Load_Click" />
+                        <Button Content="Open"
+                                Width="40"
+                                Height="30"
+                                Margin="0,3"
+                                Background="#1565A8"
+                                Foreground="White"
+                                BorderThickness="0"
+                                FontSize="12"
+                                HorizontalContentAlignment="Left"
+                                Padding="5"
+                                Click="Btn_Open_Click" />
+                    </StackPanel>
                 </Grid>
 
                 <!-- 侦测图路径 -->
@@ -397,14 +426,17 @@
                                    VerticalAlignment="Center" />
                     </Border>
                     <Button Grid.Column="1"
-                            Content="open"
-                            Width="50"
+                            Content="Open"
+                            Width="40"
                             Height="30"
                             Margin="6,0,0,0"
                             Background="#1565A8"
                             Foreground="White"
                             BorderThickness="0"
-                            FontSize="8" />
+                            FontSize="12"
+                            HorizontalContentAlignment="Left"
+                            Padding="5"
+                            Click="Btn_OpenResult_Click" />
                 </Grid>
             </Grid>
         </Grid>
