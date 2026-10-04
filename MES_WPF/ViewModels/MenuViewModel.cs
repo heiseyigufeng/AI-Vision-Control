@@ -134,6 +134,7 @@ namespace MES_WPF.ViewModels
             //productionItem.SubItems.Add(new MenuItemModel { Title = "生产计划", ViewName = "ProductionPlanView" });
             //productionItem.SubItems.Add(new MenuItemModel { Title = "生产执行", ViewName = "ProductionExecutionView" });
             //productionItem.SubItems.Add(new MenuItemModel { Title = "生产报表", ViewName = "ProductionReportView" });
+            productionItem.SubItems.Add(new MenuItemModel { Title = "ImageCaptureView", ViewName = "ImageCaptureView" });
             productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionView", ViewName = "LabelInversionView" });
             productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionManualView", ViewName = "LabelInversionManualView" });
             MenuItems.Add(productionItem);

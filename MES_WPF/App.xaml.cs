@@ -120,6 +120,17 @@ namespace MES_WPF
                 Shutdown();
             }
         }
+        protected override void OnExit(ExitEventArgs e)
+        {
+            try
+            {
+                var camera = _serviceProvider?.GetService<CameraService>();
+                camera?.Close();
+            }
+            catch { }
+
+            base.OnExit(e);
+        }
 
         private void ConfigureServices(ServiceCollection services)
         {
@@ -131,6 +142,7 @@ namespace MES_WPF
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<INavigationService, NavigationService>();
             services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<CameraService>();
 
             // 注册所有仓储
             // 用户相关仓储
@@ -260,6 +272,7 @@ namespace MES_WPF
             services.AddSingleton<SystemConfigManagementView>();
 
             // 注册生产管理模块
+            services.AddTransient<ImageCaptureView>();
             services.AddTransient<LabelInversionView>();
             services.AddTransient<LabelInversionManualView>();
 
