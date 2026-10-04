@@ -12,18 +12,13 @@
           Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <!-- 第0行：顶部信息栏 -->
             <RowDefinition Height="Auto" />
-            <!-- 第1行：条码 + 输入框 + OK -->
             <RowDefinition Height="Auto" />
-            <!-- 第2行：标题栏 -->
             <RowDefinition Height="*" />
-            <!-- 第3行：主内容区 -->
             <RowDefinition Height="Auto" />
-            <!-- 第4行：操作日志 -->
         </Grid.RowDefinitions>
 
-        <!-- ===== 第1行：顶部信息栏 ===== -->
+        <!-- ===== 第0行：顶部信息栏 ===== -->
         <Border Grid.Row="0"
                 BorderBrush="#2196F3"
                 BorderThickness="1"
@@ -187,7 +182,7 @@
             </ScrollViewer>
         </Border>
 
-        <!-- ===== 第2行：条码 + 输入框 + OK 按钮 ===== -->
+        <!-- ===== 第1行：条码 + 输入框 + OK 按钮 ===== -->
         <Grid Grid.Row="1"
               Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
@@ -237,7 +232,7 @@
                     Click="Btn_Detect_Click" />
         </Grid>
 
-        <!-- ===== 第3行：标题栏 ===== -->
+        <!-- ===== 第2行：标题栏 + 相机控制 ===== -->
         <Grid Grid.Row="2"
               Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
@@ -245,12 +240,43 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0"
-                       Text="Camera"
-                       Foreground="White"
-                       FontSize="14"
-                       VerticalAlignment="Center" />
+            <!-- 左侧：相机标题 + Open/Close 按钮 -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock Text="Camera"
+                           Foreground="White"
+                           FontSize="14"
+                           Margin="0,0,10,0"
+                           VerticalAlignment="Center" />
 
+                <Button x:Name="Btn_OpenCamera"
+                        Content="Open Camera"
+                        Width="120"
+                        Height="30"
+                        Padding="0,5"
+                        Background="#2196F3"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontSize="13"
+                        Cursor="Hand"
+                        Click="Btn_OpenCamera_Click" />
+
+                <Button x:Name="Btn_CloseCamera"
+                        Content="Close Camera"
+                        Width="120"
+                        Height="30"
+                        Margin="12,0,0,0"
+                        Padding="0,5"
+                        Background="#2196F3"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontSize="13"
+                        Cursor="Hand"
+                        Click="Btn_CloseCamera_Click" />
+            </StackPanel>
+
+            <!-- 右侧：Delay Time + 类别 + Manual 按钮 -->
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Left"
@@ -340,25 +366,28 @@
             </StackPanel>
         </Grid>
 
-        <!-- ===== 第4行：主内容区（相机 + 右侧两图） ===== -->
+        <!-- ===== 第3行：主内容区 ===== -->
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 左侧相机 -->
+            <!-- 左侧：实时相机画面 -->
             <Border Grid.Column="0"
                     BorderBrush="#2196F3"
                     BorderThickness="1"
                     Background="#0F2438"
                     Margin="0,0,6,0">
                 <Grid>
-                    <TextBlock Text="Real-time camera"
-                               Foreground="White"
+                    <TextBlock x:Name="CameraPlaceholder"
+                               Text="Real-time camera"
+                               Foreground="#4A6B8A"
                                FontSize="20"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
+                    <Image x:Name="CameraImage"
+                           Stretch="Uniform" />
                 </Grid>
             </Border>
 
@@ -479,7 +508,7 @@
             </Grid>
         </Grid>
 
-        <!-- ===== 第5行：操作日志 ===== -->
+        <!-- ===== 第4行：操作日志 ===== -->
         <Border Grid.Row="4"
                 BorderBrush="#2196F3"
                 BorderThickness="1"
