@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MES_WPF.Services;
 
@@ -20,7 +19,7 @@ namespace MES_WPF.Views.ProductionManagement
         private string _currentPhotoPath = "";
         private string _currentResultPath = "";
 
-        // 程序所在目录 + 两个子文件夹
+        // 程序所在目录 + 子文件夹
         private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
         private static readonly string OrigImageDir = Path.Combine(BaseDir, "OrigImage");
         private static readonly string ResultImageDir = Path.Combine(BaseDir, "ResultImage");
@@ -37,7 +36,6 @@ namespace MES_WPF.Views.ProductionManagement
         {
             InitializeComponent();
 
-            // 让 XAML 里的 DataGrid 能找到 OperationLogs
             DataContext = this;
 
             InitializeFolders();
@@ -45,9 +43,6 @@ namespace MES_WPF.Views.ProductionManagement
             InitializeYolo();
         }
 
-        /// <summary>
-        /// 日志项
-        /// </summary>
         public class LogItem
         {
             public string Time { get; set; }
@@ -229,11 +224,10 @@ namespace MES_WPF.Views.ProductionManagement
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string resultPath = Path.Combine(ResultImageDir, $"result_{timestamp}.jpg");
 
-                // 后台执行检测
                 DetectionResult detResult = await Task.Run(() =>
                     _detector.Detect(_currentPhotoPath, resultPath, selectedClass, confThreshold));
 
-                // ========== 显示结果图 ==========
+                // 显示结果图
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -249,9 +243,9 @@ namespace MES_WPF.Views.ProductionManagement
                 ResultPathText.Text = "Result Path: " + resultPath;
 
                 // ========== 判断 OK / NG ==========
-                bool found = detResult.Detections.Count > 0;
+                bool found = detResult.ValidDetections.Count > 0;
 
-                // 注意：这里不再修改 Btn_Detect 的 Content / Background / Foreground / BorderBrush
+                // OK 按钮 UI 不变
 
                 // ========== 写日志 ==========
                 AddLog(found, detResult, selectedClass);
@@ -266,8 +260,9 @@ namespace MES_WPF.Views.ProductionManagement
                 Btn_Detect.IsEnabled = true;
             }
         }
+
         /// <summary>
-        /// 添加一条日志（DataGrid + 文件）
+        /// 添加一条日志
         /// </summary>
         private void AddLog(bool found, DetectionResult detResult, string selectedClass)
         {
@@ -275,33 +270,42 @@ namespace MES_WPF.Views.ProductionManagement
             string status = found ? "OK" : "NG";
             string detail;
 
+            // 图片宽高
+            int imgW = 0, imgH = 0;
+            if (File.Exists(_currentPhotoPath))
+            {
+                using var mat = OpenCvSharp.Cv2.ImRead(_currentPhotoPath);
+                imgW = mat.Width;
+                imgH = mat.Height;
+            }
+
             if (found)
             {
-                // 取置信度最高的那个
-                var best = detResult.Detections.OrderByDescending(d => d.Confidence).First();
-
-                // 图片宽高（从 Detections 拿不到，从原图读一次，或者从记录里拿）
-                int imgW = 0, imgH = 0;
-                if (File.Exists(_currentPhotoPath))
-                {
-                    using var mat = OpenCvSharp.Cv2.ImRead(_currentPhotoPath);
-                    imgW = mat.Width;
-                    imgH = mat.Height;
-                }
-
-                // 框中心点
+                // 有有效检测 → OK
+                var best = detResult.ValidDetections.OrderByDescending(d => d.Confidence).First();
                 int cx = best.X + best.Width / 2;
                 int cy = best.Y + best.Height / 2;
 
                 detail = $"Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
                          $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
             }
+            else if (detResult.LowConfDetections.Count > 0)
+            {
+                // 检测到但置信度低于阈值 → NG，但显示信息
+                var best = detResult.LowConfDetections.OrderByDescending(d => d.Confidence).First();
+                int cx = best.X + best.Width / 2;
+                int cy = best.Y + best.Height / 2;
+
+                detail = $"[Confidence below threshold] Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
+                         $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
+            }
             else
             {
+                // 完全没检测到
                 detail = "Not detected: target not found";
             }
 
-            // 1. 加入 DataGrid
+            // 加入 DataGrid
             OperationLogs.Insert(0, new LogItem
             {
                 Time = time,
@@ -309,7 +313,7 @@ namespace MES_WPF.Views.ProductionManagement
                 Detail = detail
             });
 
-            // 2. 写入按天分文件的日志
+            // 写日志文件
             try
             {
                 string logFile = Path.Combine(LogDir, $"{DateTime.Now:yyyy-MM-dd}.log");

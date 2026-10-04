@@ -34,7 +34,7 @@ namespace MES_WPF.Services
         /// <param name="imagePath">输入图片路径</param>
         /// <param name="outputPath">输出结果图路径</param>
         /// <param name="filterClassName">只保留这个类别（null 表示保留所有）</param>
-        /// <param name="confThreshold">置信度阈值（低于此值的框被过滤）</param>
+        /// <param name="confThreshold">置信度阈值（低于此值的框会被标红，但保留）</param>
         public DetectionResult Detect(string imagePath, string outputPath,
                                       string filterClassName = null,
                                       float confThreshold = 0.25f)
@@ -45,7 +45,6 @@ namespace MES_WPF.Services
             if (src.Empty())
                 throw new Exception($"Failed to load image: {imagePath}");
 
-            // 1. 预处理：resize + 归一化
             int origW = src.Width;
             int origH = src.Height;
 
@@ -54,7 +53,6 @@ namespace MES_WPF.Services
 
             var inputTensor = PreprocessImage(resized);
 
-            // 2. 推理
             var inputs = new List<NamedOnnxValue>
             {
                 NamedOnnxValue.CreateFromTensor(_session.InputMetadata.Keys.First(), inputTensor)
@@ -63,26 +61,38 @@ namespace MES_WPF.Services
             using var outputs = _session.Run(inputs);
             var output = outputs.First().AsTensor<float>();
 
-            // 3. 后处理：解析检测框、NMS（用传入的阈值）
-            var detections = Postprocess(output, origW, origH, confThreshold);
+            // 拿到所有框（最低 0.05 过滤，避免 NMS 处理太多）
+            var allDetections = PostprocessAll(output, origW, origH);
 
-            // 4. 只保留指定类别
+            // 只保留指定类别
             if (!string.IsNullOrEmpty(filterClassName))
             {
-                detections = detections
+                allDetections = allDetections
                     .Where(d => string.Equals(d.ClassName, filterClassName, StringComparison.OrdinalIgnoreCase))
                     .ToList();
-
-                // 重新编号
-                for (int i = 0; i < detections.Count; i++)
-                {
-                    detections[i].Index = i + 1;
-                }
             }
 
-            // 5. 画框
-            foreach (var det in detections)
+            // 分两类：>= 阈值（有效） 和 < 阈值（低置信度）
+            var validDetections = allDetections.Where(d => d.Confidence >= confThreshold).ToList();
+            var lowConfDetections = allDetections.Where(d => d.Confidence < confThreshold).ToList();
+
+            // 画低置信度的框（红）
+            foreach (var det in lowConfDetections)
             {
+                var rect = new Rect(det.X, det.Y, det.Width, det.Height);
+                Cv2.Rectangle(src, rect, new Scalar(0, 0, 255), 2);
+
+                string label = $"{det.ClassName} {det.Confidence:F2} (< threshold)";
+                Cv2.PutText(src, label, new Point(det.X, det.Y - 5),
+                    HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 0, 255), 2);
+            }
+
+            // 画有效框（绿），并重新编号
+            for (int i = 0; i < validDetections.Count; i++)
+            {
+                var det = validDetections[i];
+                det.Index = i + 1;
+
                 var rect = new Rect(det.X, det.Y, det.Width, det.Height);
                 Cv2.Rectangle(src, rect, new Scalar(0, 255, 0), 2);
 
@@ -91,15 +101,15 @@ namespace MES_WPF.Services
                     HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 255, 0), 2);
             }
 
-            // 6. 保存结果图
             Cv2.ImWrite(outputPath, src);
 
+            // 返回结果
             result.OutputPath = outputPath;
-            result.Detections = detections;
-            result.MaxConfidence = detections.Count > 0 ? detections.Max(d => d.Confidence) : 0;
-
-            // 7. 按类别统计
-            result.ClassCounts = detections
+            result.Detections = allDetections;               // 所有框
+            result.ValidDetections = validDetections;        // >= 阈值
+            result.LowConfDetections = lowConfDetections;    // < 阈值
+            result.MaxConfidence = allDetections.Count > 0 ? allDetections.Max(d => d.Confidence) : 0;
+            result.ClassCounts = validDetections
                 .GroupBy(d => d.ClassName)
                 .ToDictionary(g => g.Key, g => g.Count());
 
@@ -107,7 +117,7 @@ namespace MES_WPF.Services
         }
 
         /// <summary>
-        /// 图片预处理：转成 ONNX 输入的 Tensor
+        /// 图片预处理
         /// </summary>
         private DenseTensor<float> PreprocessImage(Mat img)
         {
@@ -118,7 +128,6 @@ namespace MES_WPF.Services
                 for (int x = 0; x < _inputWidth; x++)
                 {
                     var pixel = img.At<Vec3b>(y, x);
-                    // BGR → RGB，归一化到 0~1
                     tensor[0, 0, y, x] = pixel.Item2 / 255f;   // R
                     tensor[0, 1, y, x] = pixel.Item1 / 255f;   // G
                     tensor[0, 2, y, x] = pixel.Item0 / 255f;   // B
@@ -129,15 +138,13 @@ namespace MES_WPF.Services
         }
 
         /// <summary>
-        /// 后处理：解析 YOLO 输出
+        /// 拿到所有框（只做 0.05 的最低过滤）
         /// </summary>
-        private List<Detection> Postprocess(Tensor<float> output, int origW, int origH, float confThreshold)
+        private List<Detection> PostprocessAll(Tensor<float> output, int origW, int origH)
         {
             var detections = new List<Detection>();
 
-            // YOLOv8/v11 输出形状：[1, 4 + numClasses, 8400]
             var dims = output.Dimensions;
-
             int numClasses = dims[1] - 4;
             int numBoxes = dims[2];
 
@@ -146,7 +153,6 @@ namespace MES_WPF.Services
 
             for (int i = 0; i < numBoxes; i++)
             {
-                // 找最大类别概率
                 float maxConf = 0;
                 int maxClass = 0;
 
@@ -160,16 +166,13 @@ namespace MES_WPF.Services
                     }
                 }
 
-                // 用传入的阈值过滤
-                if (maxConf < confThreshold) continue;
+                if (maxConf < 0.05f) continue;
 
-                // 获取框坐标（中心点 + 宽高）
                 float cx = output[0, 0, i];
                 float cy = output[0, 1, i];
                 float w = output[0, 2, i];
                 float h = output[0, 3, i];
 
-                // 转换到原图坐标
                 int x = (int)((cx - w / 2) * xScale);
                 int y = (int)((cy - h / 2) * yScale);
                 int boxW = (int)(w * xScale);
@@ -187,12 +190,11 @@ namespace MES_WPF.Services
                 });
             }
 
-            // NMS 去重
             return NMS(detections);
         }
 
         /// <summary>
-        /// NMS 非极大值抑制
+        /// NMS
         /// </summary>
         private List<Detection> NMS(List<Detection> detections)
         {
@@ -202,7 +204,6 @@ namespace MES_WPF.Services
             while (sorted.Count > 0)
             {
                 var best = sorted[0];
-                best.Index = result.Count + 1;
                 result.Add(best);
                 sorted.RemoveAt(0);
 
@@ -254,7 +255,9 @@ namespace MES_WPF.Services
     public class DetectionResult
     {
         public string OutputPath { get; set; }
-        public List<Detection> Detections { get; set; } = new();
+        public List<Detection> Detections { get; set; } = new();         // 所有框
+        public List<Detection> ValidDetections { get; set; } = new();    // >= 阈值
+        public List<Detection> LowConfDetections { get; set; } = new();  // < 阈值
         public float MaxConfidence { get; set; }
         public Dictionary<string, int> ClassCounts { get; set; } = new();
     }
