@@ -1,0 +1,12 @@
+path: family
+train: images/train
+val: images/val
+test: 
+
+names:
+  0: BoRui
+  1: BaBa
+  2: YiRan
+  3: MaMa
+  4: YiRand
+  5: NaiNai

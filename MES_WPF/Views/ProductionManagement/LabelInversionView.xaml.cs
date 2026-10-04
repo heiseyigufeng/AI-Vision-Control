@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -22,12 +23,14 @@ namespace MES_WPF.Views.ProductionManagement
 
         // 程序所在目录 + 子文件夹
         private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
+        private static readonly string AssetsDir = Path.Combine(BaseDir, "Assets");
         private static readonly string OrigImageDir = Path.Combine(BaseDir, "OrigImage");
         private static readonly string ResultImageDir = Path.Combine(BaseDir, "ResultImage");
         private static readonly string LogDir = Path.Combine(BaseDir, "logs");
 
-        // ========== YOLO 相关 ==========
-        private static readonly string ModelPath = Path.Combine(BaseDir, "Assets", "family.onnx");
+        // ========== YOLO 相关（运行时动态查找） ==========
+        private string _modelPath = "";   // 最新的 .onnx
+        private string _yamlPath = "";    // 最新的 .yaml / .yml
         private YoloOnnxDetector _detector;
 
         // ========== 操作日志 ==========
@@ -40,7 +43,18 @@ namespace MES_WPF.Views.ProductionManagement
             DataContext = this;
 
             InitializeFolders();
+
+            // 查找最新的 onnx 和 yaml
+            _modelPath = FindLatestOnnxFile();
+            _yamlPath = FindLatestYamlFile();
+
+            // 从 yaml 生成 DetectionClass.txt
+            GenerateDetectionClassFromYaml();
+
+            // 加载类别到 ComboBox
             LoadDetectionClasses();
+
+            // 初始化 YOLO
             InitializeYolo();
         }
 
@@ -51,6 +65,157 @@ namespace MES_WPF.Views.ProductionManagement
             public string Detail { get; set; }
         }
 
+        // ==================== 文件查找 ====================
+
+        /// <summary>
+        /// 查找 Assets 文件夹下最新的 .onnx 文件（按修改时间倒序）
+        /// </summary>
+        private string FindLatestOnnxFile()
+        {
+            try
+            {
+                if (!Directory.Exists(AssetsDir)) return "";
+
+                var files = Directory.GetFiles(AssetsDir, "*.onnx")
+                    .OrderByDescending(f => File.GetLastWriteTime(f))
+                    .ToList();
+
+                return files.Count > 0 ? files[0] : "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// 查找 Assets 文件夹下最新的 .yaml / .yml 文件（按修改时间倒序）
+        /// </summary>
+        private string FindLatestYamlFile()
+        {
+            try
+            {
+                if (!Directory.Exists(AssetsDir)) return "";
+
+                var files = Directory.GetFiles(AssetsDir, "*.yaml")
+                    .Concat(Directory.GetFiles(AssetsDir, "*.yml"))
+                    .OrderByDescending(f => File.GetLastWriteTime(f))
+                    .ToList();
+
+                return files.Count > 0 ? files[0] : "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        // ==================== YAML 解析 ====================
+
+        /// <summary>
+        /// 从最新的 yaml 生成 DetectionClass.txt（存在则覆盖）
+        /// </summary>
+        private void GenerateDetectionClassFromYaml()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_yamlPath) || !File.Exists(_yamlPath))
+                {
+                    MessageBox.Show("No .yaml file found in Assets folder.", "Warning",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var classNames = ParseNamesFromYaml(_yamlPath);
+
+                if (classNames.Count == 0)
+                {
+                    MessageBox.Show($"No class names found in {Path.GetFileName(_yamlPath)}.", "Warning",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                string txtPath = Path.Combine(AssetsDir, "DetectionClass.txt");
+                File.WriteAllLines(txtPath, classNames);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to generate DetectionClass.txt: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// 从 YAML 文件解析 names 段
+        /// 支持：
+        /// names:
+        ///   0: BoRui
+        ///   1: BaBa
+        /// 或
+        /// names:
+        ///   - BoRui
+        ///   - BaBa
+        /// </summary>
+        private List<string> ParseNamesFromYaml(string yamlPath)
+        {
+            var result = new List<string>();
+            var lines = File.ReadAllLines(yamlPath);
+
+            bool inNamesSection = false;
+            var rawEntries = new List<(int index, string name)>();
+
+            foreach (var rawLine in lines)
+            {
+                string line = rawLine.TrimEnd();
+
+                // 找 "names:"
+                if (line.Trim().Equals("names:", StringComparison.OrdinalIgnoreCase))
+                {
+                    inNamesSection = true;
+                    continue;
+                }
+
+                if (!inNamesSection) continue;
+
+                string trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#"))
+                    continue;
+
+                // 缩进结束 → 退出 names 段
+                if (!rawLine.StartsWith(" ") && !rawLine.StartsWith("\t"))
+                    break;
+
+                // 格式 1: "0: BoRui"
+                if (trimmed.Contains(':'))
+                {
+                    var parts = trimmed.Split(new[] { ':' }, 2);
+                    if (int.TryParse(parts[0].Trim(), out int idx))
+                    {
+                        string name = parts[1].Trim().Trim('"', '\'');
+                        if (!string.IsNullOrEmpty(name))
+                            rawEntries.Add((idx, name));
+                    }
+                }
+                // 格式 2: "- BoRui"
+                else if (trimmed.StartsWith("-"))
+                {
+                    string name = trimmed.Substring(1).Trim().Trim('"', '\'');
+                    if (!string.IsNullOrEmpty(name))
+                        result.Add(name);
+                }
+            }
+
+            // 格式 1 按索引排序返回
+            if (rawEntries.Count > 0)
+            {
+                result = rawEntries.OrderBy(e => e.index).Select(e => e.name).ToList();
+            }
+
+            return result;
+        }
+
+        // ==================== 初始化 ====================
+
         /// <summary>
         /// 初始化 YOLO
         /// </summary>
@@ -58,9 +223,9 @@ namespace MES_WPF.Views.ProductionManagement
         {
             try
             {
-                if (!File.Exists(ModelPath))
+                if (string.IsNullOrEmpty(_modelPath) || !File.Exists(_modelPath))
                 {
-                    MessageBox.Show($"ONNX model not found: {ModelPath}", "Error",
+                    MessageBox.Show("No .onnx file found in Assets folder.", "Error",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
@@ -77,27 +242,12 @@ namespace MES_WPF.Views.ProductionManagement
                     return;
                 }
 
-                _detector = new YoloOnnxDetector(ModelPath, classNames);
+                _detector = new YoloOnnxDetector(_modelPath, classNames);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to load YOLO model: {ex.Message}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        /// <summary>
-        /// 条码输入框：按 Enter 触发侦测
-        /// 适用于键盘回车，以及扫码枪以 Enter 结尾的自动触发
-        /// </summary>
-        private void Txt_Barcode_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.Enter)
-            {
-                e.Handled = true;   // 阻止回车产生蜂鸣声
-
-                // 调用 OK 按钮的逻辑
-                Btn_Detect_Click(sender, e);
             }
         }
 
@@ -108,7 +258,7 @@ namespace MES_WPF.Views.ProductionManagement
         {
             try
             {
-                string filePath = Path.Combine(BaseDir, "Assets", "DetectionClass.txt");
+                string filePath = Path.Combine(AssetsDir, "DetectionClass.txt");
 
                 if (!File.Exists(filePath))
                 {
@@ -161,6 +311,8 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
+        // ==================== 事件 ====================
+
         /// <summary>
         /// Load 按钮
         /// </summary>
@@ -191,7 +343,7 @@ namespace MES_WPF.Views.ProductionManagement
                     PhotoPlaceholder.Visibility = Visibility.Collapsed;
 
                     _currentPhotoPath = filePath;
-                    _currentSavedOrigPath = "";    // 重置保存路径（换图了）
+                    _currentSavedOrigPath = "";   // 换图了，重置保存路径
                     OrigPathText.Text = "Orig Path: " + filePath;
                 }
                 catch (Exception ex)
@@ -199,6 +351,18 @@ namespace MES_WPF.Views.ProductionManagement
                     MessageBox.Show($"Load picture fail: {ex.Message}", "Error",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 条码输入框：按 Enter 触发侦测（扫码枪以 Enter 结尾时同样触发）
+        /// </summary>
+        private void Txt_Barcode_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                e.Handled = true;
+                Btn_Detect_Click(this.Btn_Detect, new RoutedEventArgs());
             }
         }
 
@@ -229,29 +393,17 @@ namespace MES_WPF.Views.ProductionManagement
             // 读取 Confidence 阈值
             float confThreshold = 0.25f;
             if (!float.TryParse(TxtConfidence.Text, out confThreshold))
-            {
                 confThreshold = 0.25f;
-            }
             confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
 
             // 读取条码
             string barcode = Txt_Barcode.Text?.Trim() ?? "";
             if (string.IsNullOrEmpty(barcode))
-            {
-                OperationLogs.Add(new LogItem
-                {
-                    Time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
-                    Status = "NG",
-                    Detail = "Barcode can't input empty "
-                });
-                return;
-            }
+                barcode = "NOBARCODE";
 
-            // 过滤文件名非法字符
+            // 过滤非法文件名字符
             foreach (var c in Path.GetInvalidFileNameChars())
-            {
                 barcode = barcode.Replace(c, '_');
-            }
 
             try
             {
@@ -261,11 +413,11 @@ namespace MES_WPF.Views.ProductionManagement
                 string resultPath = Path.Combine(ResultImageDir, $"result_{barcode}_{timestamp}.jpg");
                 string origSavePath = Path.Combine(OrigImageDir, $"orig_{barcode}_{timestamp}.jpg");
 
-                // ========== 保存原图 ==========
+                // 保存原图
                 try
                 {
                     File.Copy(_currentPhotoPath, origSavePath, true);
-                    _currentSavedOrigPath = origSavePath;    // ← 记录保存后的原图路径
+                    _currentSavedOrigPath = origSavePath;
                 }
                 catch (Exception ex)
                 {
@@ -273,11 +425,11 @@ namespace MES_WPF.Views.ProductionManagement
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                // ========== 执行检测 ==========
+                // 执行检测
                 DetectionResult detResult = await Task.Run(() =>
                     _detector.Detect(_currentPhotoPath, resultPath, selectedClass, confThreshold));
 
-                // ========== 显示结果图 ==========
+                // 显示结果图
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -329,7 +481,6 @@ namespace MES_WPF.Views.ProductionManagement
 
             if (found)
             {
-                // 有有效检测 → OK
                 var best = detResult.ValidDetections.OrderByDescending(d => d.Confidence).First();
                 int cx = best.X + best.Width / 2;
                 int cy = best.Y + best.Height / 2;
@@ -339,7 +490,6 @@ namespace MES_WPF.Views.ProductionManagement
             }
             else if (detResult.LowConfDetections.Count > 0)
             {
-                // 检测到但置信度低于阈值 → NG，但显示信息
                 var best = detResult.LowConfDetections.OrderByDescending(d => d.Confidence).First();
                 int cx = best.X + best.Width / 2;
                 int cy = best.Y + best.Height / 2;
@@ -349,7 +499,6 @@ namespace MES_WPF.Views.ProductionManagement
             }
             else
             {
-                // 完全没检测到
                 detail = "Not detected: target not found";
             }
 
@@ -376,7 +525,7 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// Photo 的 Open：优先打开保存到 OrigImage 的原图，没保存过就打开 Load 选的
+        /// Photo 的 Open：优先打开保存后的原图
         /// </summary>
         private void Btn_Open_Click(object sender, RoutedEventArgs e)
         {

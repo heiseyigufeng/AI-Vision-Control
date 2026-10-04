@@ -12,14 +12,15 @@
   <ItemGroup>
     <None Remove="Assets\DetectionClass.txt" />
     <None Remove="Assets\family.onnx" />
+    <None Remove="Assets\family.yaml" />
     <None Remove="Assets\First.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\DetectionClass.txt">
+    <Content Include="Assets\family.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\family.onnx">
+    <Content Include="Assets\family.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\AIT.ico" />
