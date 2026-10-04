@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/MES_WPF/setup/Output/F12_AI_Vision_Setup_1.0.0.zip
+/MES_WPF/setup/Output
