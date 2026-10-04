@@ -210,6 +210,7 @@
             </Border>
 
             <TextBox Grid.Column="1"
+                     x:Name="Txt_Barcode"
                      Text=""
                      Foreground="White"
                      Background="#0F2438"
@@ -219,7 +220,8 @@
                      Height="46"
                      Margin="6,0"
                      VerticalContentAlignment="Center"
-                     Padding="8,0" />
+                     Padding="8,0"
+                     KeyDown="Txt_Barcode_KeyDown" />
 
             <Button Grid.Column="2"
                     x:Name="Btn_Detect"

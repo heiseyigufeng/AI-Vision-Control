@@ -16,8 +16,9 @@ namespace MES_WPF.Views.ProductionManagement
     public partial class LabelInversionView : UserControl
     {
         // ========== 路径字段 ==========
-        private string _currentPhotoPath = "";
-        private string _currentResultPath = "";
+        private string _currentPhotoPath = "";        // Load 选的原始路径
+        private string _currentResultPath = "";       // 结果图路径
+        private string _currentSavedOrigPath = "";    // 保存到 OrigImage 后的原图路径
 
         // 程序所在目录 + 子文件夹
         private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -82,6 +83,21 @@ namespace MES_WPF.Views.ProductionManagement
             {
                 MessageBox.Show($"Failed to load YOLO model: {ex.Message}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// 条码输入框：按 Enter 触发侦测
+        /// 适用于键盘回车，以及扫码枪以 Enter 结尾的自动触发
+        /// </summary>
+        private void Txt_Barcode_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                e.Handled = true;   // 阻止回车产生蜂鸣声
+
+                // 调用 OK 按钮的逻辑
+                Btn_Detect_Click(sender, e);
             }
         }
 
@@ -175,6 +191,7 @@ namespace MES_WPF.Views.ProductionManagement
                     PhotoPlaceholder.Visibility = Visibility.Collapsed;
 
                     _currentPhotoPath = filePath;
+                    _currentSavedOrigPath = "";    // 重置保存路径（换图了）
                     OrigPathText.Text = "Orig Path: " + filePath;
                 }
                 catch (Exception ex)
@@ -217,17 +234,50 @@ namespace MES_WPF.Views.ProductionManagement
             }
             confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
 
+            // 读取条码
+            string barcode = Txt_Barcode.Text?.Trim() ?? "";
+            if (string.IsNullOrEmpty(barcode))
+            {
+                OperationLogs.Add(new LogItem
+                {
+                    Time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
+                    Status = "NG",
+                    Detail = "Barcode can't input empty "
+                });
+                return;
+            }
+
+            // 过滤文件名非法字符
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
+                barcode = barcode.Replace(c, '_');
+            }
+
             try
             {
                 Btn_Detect.IsEnabled = false;
 
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string resultPath = Path.Combine(ResultImageDir, $"result_{timestamp}.jpg");
+                string resultPath = Path.Combine(ResultImageDir, $"result_{barcode}_{timestamp}.jpg");
+                string origSavePath = Path.Combine(OrigImageDir, $"orig_{barcode}_{timestamp}.jpg");
 
+                // ========== 保存原图 ==========
+                try
+                {
+                    File.Copy(_currentPhotoPath, origSavePath, true);
+                    _currentSavedOrigPath = origSavePath;    // ← 记录保存后的原图路径
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to save original image: {ex.Message}", "Warning",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // ========== 执行检测 ==========
                 DetectionResult detResult = await Task.Run(() =>
                     _detector.Detect(_currentPhotoPath, resultPath, selectedClass, confThreshold));
 
-                // 显示结果图
+                // ========== 显示结果图 ==========
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -242,12 +292,10 @@ namespace MES_WPF.Views.ProductionManagement
                 _currentResultPath = resultPath;
                 ResultPathText.Text = "Result Path: " + resultPath;
 
-                // ========== 判断 OK / NG ==========
+                // 判断 OK / NG
                 bool found = detResult.ValidDetections.Count > 0;
 
-                // OK 按钮 UI 不变
-
-                // ========== 写日志 ==========
+                // 写日志
                 AddLog(found, detResult, selectedClass);
             }
             catch (Exception ex)
@@ -328,11 +376,15 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// Photo 的 Open
+        /// Photo 的 Open：优先打开保存到 OrigImage 的原图，没保存过就打开 Load 选的
         /// </summary>
         private void Btn_Open_Click(object sender, RoutedEventArgs e)
         {
-            OpenFolderAndSelectFile(_currentPhotoPath);
+            string pathToOpen = !string.IsNullOrEmpty(_currentSavedOrigPath)
+                ? _currentSavedOrigPath
+                : _currentPhotoPath;
+
+            OpenFolderAndSelectFile(pathToOpen);
         }
 
         /// <summary>
