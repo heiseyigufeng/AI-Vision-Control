@@ -170,7 +170,8 @@
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <TextBox Text="0.66"
+                        <TextBox x:Name="TxtConfidence"
+                                 Text="0.66"
                                  Foreground="White"
                                  Background="#0F2438"
                                  BorderBrush="#2196F3"

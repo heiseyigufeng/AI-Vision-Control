@@ -17,7 +17,6 @@ namespace MES_WPF.Services
         private readonly string[] _classNames;
         private readonly int _inputWidth = 640;
         private readonly int _inputHeight = 640;
-        private readonly float _confThreshold = 0.25f;
         private readonly float _iouThreshold = 0.45f;
 
         public YoloOnnxDetector(string modelPath, string[] classNames)
@@ -35,7 +34,10 @@ namespace MES_WPF.Services
         /// <param name="imagePath">输入图片路径</param>
         /// <param name="outputPath">输出结果图路径</param>
         /// <param name="filterClassName">只保留这个类别（null 表示保留所有）</param>
-        public DetectionResult Detect(string imagePath, string outputPath, string filterClassName = null)
+        /// <param name="confThreshold">置信度阈值（低于此值的框被过滤）</param>
+        public DetectionResult Detect(string imagePath, string outputPath,
+                                      string filterClassName = null,
+                                      float confThreshold = 0.25f)
         {
             var result = new DetectionResult();
 
@@ -61,8 +63,8 @@ namespace MES_WPF.Services
             using var outputs = _session.Run(inputs);
             var output = outputs.First().AsTensor<float>();
 
-            // 3. 后处理：解析检测框、NMS
-            var detections = Postprocess(output, origW, origH);
+            // 3. 后处理：解析检测框、NMS（用传入的阈值）
+            var detections = Postprocess(output, origW, origH, confThreshold);
 
             // 4. 只保留指定类别
             if (!string.IsNullOrEmpty(filterClassName))
@@ -129,7 +131,7 @@ namespace MES_WPF.Services
         /// <summary>
         /// 后处理：解析 YOLO 输出
         /// </summary>
-        private List<Detection> Postprocess(Tensor<float> output, int origW, int origH)
+        private List<Detection> Postprocess(Tensor<float> output, int origW, int origH, float confThreshold)
         {
             var detections = new List<Detection>();
 
@@ -158,7 +160,8 @@ namespace MES_WPF.Services
                     }
                 }
 
-                if (maxConf < _confThreshold) continue;
+                // 用传入的阈值过滤
+                if (maxConf < confThreshold) continue;
 
                 // 获取框坐标（中心点 + 宽高）
                 float cx = output[0, 0, i];
@@ -230,6 +233,9 @@ namespace MES_WPF.Services
         }
     }
 
+    /// <summary>
+    /// 单个检测框
+    /// </summary>
     public class Detection
     {
         public int Index { get; set; }
@@ -242,6 +248,9 @@ namespace MES_WPF.Services
         public float Confidence { get; set; }
     }
 
+    /// <summary>
+    /// 检测结果
+    /// </summary>
     public class DetectionResult
     {
         public string OutputPath { get; set; }

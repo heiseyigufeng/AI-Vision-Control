@@ -197,25 +197,30 @@ namespace MES_WPF.Views.ProductionManagement
         {
             if (_detector == null)
             {
-                MessageBox.Show("YOLO model is not loaded.", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("YOLO model is not loaded.", "Error");
                 return;
             }
 
             if (string.IsNullOrEmpty(_currentPhotoPath) || !File.Exists(_currentPhotoPath))
             {
-                MessageBox.Show("Please load an image first.", "Notice",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please load an image first.", "Notice");
                 return;
             }
 
             string selectedClass = cmb_DetectionClass.SelectedItem?.ToString();
             if (string.IsNullOrEmpty(selectedClass))
             {
-                MessageBox.Show("Please select a detection class.", "Notice",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please select a detection class.", "Notice");
                 return;
             }
+
+            // 读取 Confidence 阈值
+            float confThreshold = 0.25f;
+            if (!float.TryParse(TxtConfidence.Text, out confThreshold))
+            {
+                confThreshold = 0.25f;
+            }
+            confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
 
             try
             {
@@ -224,10 +229,11 @@ namespace MES_WPF.Views.ProductionManagement
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                 string resultPath = Path.Combine(ResultImageDir, $"result_{timestamp}.jpg");
 
+                // 后台执行检测
                 DetectionResult detResult = await Task.Run(() =>
-                    _detector.Detect(_currentPhotoPath, resultPath, selectedClass));
+                    _detector.Detect(_currentPhotoPath, resultPath, selectedClass, confThreshold));
 
-                // 显示结果图
+                // ========== 显示结果图 ==========
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -242,31 +248,17 @@ namespace MES_WPF.Views.ProductionManagement
                 _currentResultPath = resultPath;
                 ResultPathText.Text = "Result Path: " + resultPath;
 
-                // 判断结果
+                // ========== 判断 OK / NG ==========
                 bool found = detResult.Detections.Count > 0;
 
-                // 更新按钮颜色
-                if (found)
-                {
-                    Btn_Detect.Content = "OK";
-                    Btn_Detect.Foreground = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50));
-                    Btn_Detect.Background = new SolidColorBrush(Color.FromRgb(0x0F, 0x2F, 0x1A));
-                    Btn_Detect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50));
-                }
-                else
-                {
-                    Btn_Detect.Content = "NG";
-                    Btn_Detect.Foreground = new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
-                    Btn_Detect.Background = new SolidColorBrush(Color.FromRgb(0x2F, 0x1A, 0x1A));
-                    Btn_Detect.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
-                }
+                // 注意：这里不再修改 Btn_Detect 的 Content / Background / Foreground / BorderBrush
 
                 // ========== 写日志 ==========
                 AddLog(found, detResult, selectedClass);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Detection failed: {ex.Message}", "Error",
+                MessageBox.Show($"Detection failed: {ex.Message}\n{ex.StackTrace}", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -274,7 +266,6 @@ namespace MES_WPF.Views.ProductionManagement
                 Btn_Detect.IsEnabled = true;
             }
         }
-
         /// <summary>
         /// 添加一条日志（DataGrid + 文件）
         /// </summary>
