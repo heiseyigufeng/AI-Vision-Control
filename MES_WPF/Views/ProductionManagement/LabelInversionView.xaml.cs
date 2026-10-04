@@ -481,7 +481,7 @@ namespace MES_WPF.Views.ProductionManagement
             // 1. 检查相机是否打开
             if (!_cameraService.IsOpened)
             {
-                AddLog("NG", "相机未打开");
+                AddLog("NG", "Camera not turned on!");
                 return;
             }
 
@@ -503,7 +503,7 @@ namespace MES_WPF.Views.ProductionManagement
             // 4. 抓取相机当前帧
             if (_lastCameraFrame == null || _lastCameraFrame.Empty())
             {
-                AddLog("NG", "相机未打开");
+                AddLog("NG", "Camera not turned on!");
                 return;
             }
 
@@ -515,8 +515,11 @@ namespace MES_WPF.Views.ProductionManagement
 
             // 6. 读取条码
             string barcode = Txt_Barcode.Text?.Trim() ?? "";
-            if (string.IsNullOrEmpty(barcode))
-                barcode = "NOBARCODE";
+            if (string.IsNullOrEmpty(barcode)) {
+                // barcode = "NOBARCODE";
+                AddLog("NG", "Barcode can not input empty!");
+                return;
+            }
             foreach (var c in Path.GetInvalidFileNameChars())
                 barcode = barcode.Replace(c, '_');
 
