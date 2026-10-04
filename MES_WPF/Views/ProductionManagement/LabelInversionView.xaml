@@ -12,11 +12,15 @@
           Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <!-- 第0行：顶部信息栏 -->
             <RowDefinition Height="Auto" />
+            <!-- 第1行：条码 + 输入框 + OK -->
             <RowDefinition Height="Auto" />
+            <!-- 第2行：标题栏 -->
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <!-- 第3行：主内容区 -->
             <RowDefinition Height="Auto" />
+            <!-- 第4行：操作日志 -->
         </Grid.RowDefinitions>
 
         <!-- ===== 第1行：顶部信息栏 ===== -->
@@ -24,7 +28,7 @@
                 BorderBrush="#2196F3"
                 BorderThickness="1"
                 Background="#0F2438"
-                Margin="0,0,0,6"
+                Margin="0,0,0,4"
                 Padding="6,4">
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled">
@@ -184,49 +188,46 @@
 
         <!-- ===== 第2行：条码 + 输入框 + OK 按钮 ===== -->
         <Grid Grid.Row="1"
-              Margin="0,0,0,6">
+              Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="8*" />
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 条码 -->
             <Border Grid.Column="0"
                     BorderBrush="#2196F3"
                     BorderThickness="1"
                     Background="#0F2438"
-                    Height="50">
+                    Height="46">
                 <materialDesign:PackIcon Kind="Qrcode"
-                                         Width="30"
-                                         Height="30"
+                                         Width="28"
+                                         Height="28"
                                          Foreground="#2196F3"
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center" />
             </Border>
 
-            <!-- 输入框 -->
             <TextBox Grid.Column="1"
                      Text=""
                      Foreground="White"
                      Background="#0F2438"
                      BorderBrush="#2196F3"
                      BorderThickness="1"
-                     FontSize="18"
-                     Height="50"
+                     FontSize="16"
+                     Height="46"
                      Margin="6,0"
                      VerticalContentAlignment="Center"
                      Padding="8,0" />
 
-            <!-- OK 按钮 -->
             <Button Grid.Column="2"
                     x:Name="Btn_Detect"
-                    Height="50"
+                    Height="46"
                     Background="#0F2F1A"
                     BorderBrush="#4CAF50"
                     BorderThickness="2"
                     Foreground="#4CAF50"
-                    FontSize="24"
+                    FontSize="22"
                     FontWeight="Bold"
                     Cursor="Hand"
                     Content="OK"
@@ -235,11 +236,10 @@
 
         <!-- ===== 第3行：标题栏 ===== -->
         <Grid Grid.Row="2"
-              Margin="0,0,0,6">
+              Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0"
@@ -258,7 +258,7 @@
                            FontSize="14"
                            VerticalAlignment="Center" />
                 <TextBox Text="1.0"
-                         Width="150"
+                         Width="100"
                          Height="24"
                          Margin="6,0,0,0"
                          Background="#0F2438"
@@ -270,7 +270,7 @@
                          Padding="4,0" />
 
                 <ComboBox x:Name="cmb_DetectionClass"
-                          Width="220"
+                          Width="180"
                           Height="24"
                           Margin="6,0,6,0"
                           Background="#0F2438"
@@ -279,8 +279,7 @@
                           BorderThickness="1"
                           FontSize="12"
                           VerticalAlignment="Center"
-                          SelectedIndex="0"
-                          HorizontalAlignment="Left">
+                          SelectedIndex="0">
                     <ComboBox.ItemContainerStyle>
                         <Style TargetType="ComboBoxItem">
                             <Setter Property="Foreground"
@@ -321,34 +320,32 @@
                 </ComboBox>
 
                 <Button Content="Manual_OK"
-                        Width="120"
-                        Height="30"
+                        Width="100"
+                        Height="28"
                         Background="Green"
                         Foreground="White"
                         BorderThickness="0"
-                        FontSize="14" />
+                        FontSize="13" />
                 <Button Content="Manual_NG"
-                        Width="120"
-                        Height="30"
+                        Width="100"
+                        Height="28"
                         Margin="6,0,0,0"
                         Background="#B71C1C"
                         Foreground="White"
                         BorderThickness="0"
-                        FontSize="14" />
+                        FontSize="13" />
             </StackPanel>
         </Grid>
 
-        <!-- ===== 第4~5行：主内容区 ===== -->
-        <Grid Grid.Row="3"
-              Grid.RowSpan="3">
+        <!-- ===== 第4行：主内容区（相机 + 右侧两图） ===== -->
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="386*" />
-                <ColumnDefinition Width="537*" />
-                <ColumnDefinition Width="461*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
+            <!-- 左侧相机 -->
             <Border Grid.Column="0"
-                    Grid.ColumnSpan="2"
                     BorderBrush="#2196F3"
                     BorderThickness="1"
                     Background="#0F2438"
@@ -362,7 +359,8 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Column="2">
+            <!-- 右侧：拍照图 + 侦测图 -->
+            <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -370,19 +368,17 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- 拍照图路径 -->
                 <Grid Grid.Row="0"
                       Margin="0,0,0,2">
                     <TextBlock x:Name="OrigPathText"
                                Text="Orig Path: -"
                                Foreground="#8FA3BF"
-                               FontSize="12"
+                               FontSize="11"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Right"
                                TextTrimming="CharacterEllipsis" />
                 </Grid>
 
-                <!-- 拍照图 -->
                 <Grid Grid.Row="1"
                       Margin="0,0,0,3">
                     <Grid.ColumnDefinitions>
@@ -397,7 +393,7 @@
                             <TextBlock x:Name="PhotoPlaceholder"
                                        Text="Photo"
                                        Foreground="#4A6B8A"
-                                       FontSize="20"
+                                       FontSize="18"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center" />
                             <Image x:Name="PhotoImage"
@@ -408,48 +404,43 @@
                     <StackPanel Grid.Column="1"
                                 Orientation="Vertical"
                                 VerticalAlignment="Center"
-                                Margin="6,0,0,0">
+                                Margin="4,0,0,0">
                         <Button x:Name="Btn_Load"
                                 Content="Load"
                                 Width="40"
-                                Height="30"
+                                Height="26"
                                 Margin="0,3"
-                                HorizontalContentAlignment="Left"
                                 Padding="5"
                                 Background="#1565A8"
                                 Foreground="White"
                                 BorderThickness="0"
-                                FontSize="12"
+                                FontSize="11"
                                 Click="Btn_Load_Click" />
                         <Button Content="Open"
                                 Width="40"
-                                Height="30"
+                                Height="26"
                                 Margin="0,3"
+                                Padding="5"
                                 Background="#1565A8"
                                 Foreground="White"
                                 BorderThickness="0"
-                                FontSize="12"
-                                HorizontalContentAlignment="Left"
-                                Padding="5"
+                                FontSize="11"
                                 Click="Btn_Open_Click" />
                     </StackPanel>
                 </Grid>
 
-                <!-- 侦测图路径 -->
                 <Grid Grid.Row="2"
                       Margin="0,3,0,2">
                     <TextBlock x:Name="ResultPathText"
                                Text="Result Path: -"
                                Foreground="#8FA3BF"
-                               FontSize="12"
+                               FontSize="11"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Right"
                                TextTrimming="CharacterEllipsis" />
                 </Grid>
 
-                <!-- 侦测结果图 -->
-                <Grid Grid.Row="3"
-                      Margin="0,0,0,0">
+                <Grid Grid.Row="3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -462,7 +453,7 @@
                             <TextBlock x:Name="ResultPlaceholder"
                                        Text="Detection image"
                                        Foreground="#4A6B8A"
-                                       FontSize="20"
+                                       FontSize="18"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center" />
                             <Image x:Name="ResultImage"
@@ -473,27 +464,25 @@
                     <Button Grid.Column="1"
                             Content="Open"
                             Width="40"
-                            Height="30"
-                            Margin="6,0,0,0"
+                            Height="26"
+                            Margin="4,0,0,0"
+                            Padding="5"
                             Background="#1565A8"
                             Foreground="White"
                             BorderThickness="0"
-                            FontSize="12"
-                            HorizontalContentAlignment="Left"
-                            Padding="5"
+                            FontSize="11"
                             Click="Btn_OpenResult_Click" />
                 </Grid>
             </Grid>
         </Grid>
 
-        <!-- ===== 第6行：操作日志 ===== -->
-        <Border Grid.Row="6"
+        <!-- ===== 第5行：操作日志 ===== -->
+        <Border Grid.Row="4"
                 BorderBrush="#2196F3"
                 BorderThickness="1"
                 Background="#0F2438"
-                Margin="0,6,0,0"
-                MinHeight="80"
-                MaxHeight="100">
+                Margin="0,4,0,0"
+                Height="160">
             <DataGrid x:Name="dgOperationLog"
                       ItemsSource="{Binding OperationLogs, RelativeSource={RelativeSource AncestorType=UserControl}}"
                       AutoGenerateColumns="False"
@@ -503,12 +492,11 @@
                       BorderThickness="0"
                       Background="#0F2438"
                       Foreground="White"
-                      RowHeight="28"
-                      FontSize="12"
+                      RowHeight="26"
+                      FontSize="8"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False">
                 <DataGrid.Resources>
-                    <!-- 表头样式 -->
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background"
                                 Value="#132844" />
@@ -519,7 +507,7 @@
                         <Setter Property="Padding"
                                 Value="8" />
                         <Setter Property="Height"
-                                Value="30" />
+                                Value="28" />
                         <Setter Property="BorderBrush"
                                 Value="#2196F3" />
                         <Setter Property="BorderThickness"
@@ -528,23 +516,17 @@
                 </DataGrid.Resources>
 
                 <DataGrid.Columns>
-                    <!-- 1. 时间 -->
                     <DataGridTextColumn Header="Time"
                                         Binding="{Binding Time}"
                                         Width="180" />
-
-                    <!-- 2. 状态 -->
                     <DataGridTextColumn Header="Status"
                                         Binding="{Binding Status}"
                                         Width="80" />
-
-                    <!-- 3. 详细 -->
                     <DataGridTextColumn Header="Detail"
                                         Binding="{Binding Detail}"
                                         Width="*" />
                 </DataGrid.Columns>
 
-                <!-- 行样式：OK 绿底，NG 红底 -->
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Setter Property="Background"
