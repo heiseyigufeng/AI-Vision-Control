@@ -28,6 +28,11 @@ namespace MES_WPF.ViewModels
         /// </summary>
         public event EventHandler<bool> LoginCompleted;
 
+        /// <summary>
+        /// 取消事件
+        /// </summary>
+        public event EventHandler CancelRequested;
+
         public LoginViewModel(IAuthenticationService authenticationService)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
@@ -48,15 +53,13 @@ namespace MES_WPF.ViewModels
             try
             {
                 bool success = await _authenticationService.LoginAsync(Username, Password);
-                
+
                 if (success)
                 {
-                    // 登录成功
                     LoginCompleted?.Invoke(this, true);
                 }
                 else
                 {
-                    // 登录失败
                     ErrorMessage = "用户名或密码错误";
                     LoginCompleted?.Invoke(this, false);
                 }
@@ -71,5 +74,15 @@ namespace MES_WPF.ViewModels
                 IsLoading = false;
             }
         }
+
+        /// <summary>
+        /// 取消登录
+        /// </summary>
+        [RelayCommand]
+        private void Cancel()
+        {
+            // 触发取消事件（由 App.xaml.cs 监听并关闭窗口）
+            CancelRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
-} 
+}

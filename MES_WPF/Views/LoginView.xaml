@@ -5,54 +5,91 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:MES_WPF.Views"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-             mc:Ignorable="d" d:DesignWidth="460" Height="488">
+             mc:Ignorable="d"
+             d:DesignWidth="460"
+             Height="488">
 
     <UserControl.Resources>
         <!-- 深色输入框 -->
-        <Style x:Key="DarkTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="Background" Value="#132844"/>
-            <Setter Property="BorderBrush" Value="#1E4B7A"/>
-            <Setter Property="materialDesign:HintAssist.Foreground" Value="#8FA3BF"/>
-            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="#1E4B7A"/>
+        <Style x:Key="DarkTextBox"
+               TargetType="TextBox"
+               BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="Height"
+                    Value="42" />
+            <Setter Property="FontSize"
+                    Value="16" />
+            <Setter Property="Foreground"
+                    Value="White" />
+            <Setter Property="CaretBrush"
+                    Value="White" />
+            <Setter Property="Background"
+                    Value="#132844" />
+            <Setter Property="BorderBrush"
+                    Value="#1E4B7A" />
+            <Setter Property="materialDesign:HintAssist.Foreground"
+                    Value="#8FA3BF" />
+            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush"
+                    Value="#1E4B7A" />
         </Style>
 
         <!-- 深色密码框 -->
-        <Style x:Key="DarkPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignOutlinedPasswordBox}">
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="Background" Value="#132844"/>
-            <Setter Property="BorderBrush" Value="#1E4B7A"/>
-            <Setter Property="materialDesign:HintAssist.Foreground" Value="#8FA3BF"/>
-            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="#1E4B7A"/>
+        <Style x:Key="DarkPasswordBox"
+               TargetType="PasswordBox"
+               BasedOn="{StaticResource MaterialDesignOutlinedPasswordBox}">
+            <Setter Property="Height"
+                    Value="42" />
+            <Setter Property="FontSize"
+                    Value="16" />
+            <Setter Property="Foreground"
+                    Value="White" />
+            <Setter Property="CaretBrush"
+                    Value="White" />
+            <Setter Property="Background"
+                    Value="#132844" />
+            <Setter Property="BorderBrush"
+                    Value="#1E4B7A" />
+            <Setter Property="materialDesign:HintAssist.Foreground"
+                    Value="#8FA3BF" />
+            <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush"
+                    Value="#1E4B7A" />
         </Style>
 
         <!-- 登录按钮 -->
-        <Style x:Key="DarkLoginBtn" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-            <Setter Property="Height" Value="48"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#0F4C81"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style x:Key="DarkLoginBtn"
+               TargetType="Button"
+               BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="Height"
+                    Value="48" />
+            <Setter Property="FontSize"
+                    Value="18" />
+            <Setter Property="FontWeight"
+                    Value="Bold" />
+            <Setter Property="Foreground"
+                    Value="White" />
+            <Setter Property="Background"
+                    Value="#0F4C81" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1565A8"/>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter Property="Background"
+                                        Value="#1565A8" />
                             </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0A3A66"/>
+                            <Trigger Property="IsPressed"
+                                     Value="True">
+                                <Setter Property="Background"
+                                        Value="#0A3A66" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -63,53 +100,89 @@
 
     <Grid Background="#0B1526">
 
-        <StackPanel VerticalAlignment="Center" Margin="60,40">
+        <StackPanel VerticalAlignment="Center"
+                    Margin="60,40">
 
             <!-- 齿轮 + 标题 -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,40">
-                <materialDesign:PackIcon Kind="Cog" Width="34" Height="34"
-                                             Foreground="#2196F3"
-                                             VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBlock Text="F12 AI Vision" FontSize="28" FontWeight="Bold"
-                               Foreground="#2196F3" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,40">
+                <materialDesign:PackIcon Kind="Cog"
+                                         Width="34"
+                                         Height="34"
+                                         Foreground="#2196F3"
+                                         VerticalAlignment="Center"
+                                         Margin="0,0,10,0" />
+                <TextBlock Text="F12 AI Vision"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="#2196F3"
+                           VerticalAlignment="Center" />
             </StackPanel>
 
             <!-- 用户名 -->
-            <TextBlock Text="User Name" FontSize="15" Foreground="#8FA3BF" Margin="0,0,0,8"/>
+            <TextBlock Text="User Name"
+                       FontSize="15"
+                       Foreground="#8FA3BF"
+                       Margin="0,0,0,8" />
             <TextBox Style="{StaticResource DarkTextBox}"
-                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Height="54"/>
+                     Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                     Height="54" />
 
             <!-- 密码 -->
-            <TextBlock Text="Password" FontSize="15" Foreground="#8FA3BF" Margin="0,20,0,8"/>
+            <TextBlock Text="Password"
+                       FontSize="15"
+                       Foreground="#8FA3BF"
+                       Margin="0,20,0,8" />
             <PasswordBox x:Name="PasswordBox"
-                             Style="{StaticResource DarkPasswordBox}"
-                             PasswordChanged="PasswordBox_PasswordChanged" Height="54"/>
+                         Style="{StaticResource DarkPasswordBox}"
+                         PasswordChanged="PasswordBox_PasswordChanged"
+                         Height="54" />
 
             <!-- 错误信息 -->
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#FF5252"
-                           TextWrapping="Wrap" Margin="0,10,0,0"
-                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="#FF5252"
+                       TextWrapping="Wrap"
+                       Margin="0,10,0,0"
+                       Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
 
-            <!-- 登录按钮 -->
-            <Button Content="Log In"
+            <!-- 登录按钮（横向排列） -->
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Content="Log In"
                         Command="{Binding LoginCommand}"
-                        Style="{StaticResource DarkLoginBtn}"
-                        Margin="0,40,0,0">
-                <Button.Resources>
-                    <Style TargetType="Button" BasedOn="{StaticResource DarkLoginBtn}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsLoading}" Value="True">
-                                <Setter Property="Content">
-                                    <Setter.Value>
-                                        <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
-                                                         IsIndeterminate="True" Width="20" Height="20"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Resources>
-            </Button>
+                        Style="{StaticResource DarkLoginBtn}">
+                    <Button.Resources>
+                        <Style TargetType="Button"
+                               BasedOn="{StaticResource DarkLoginBtn}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsLoading}"
+                                             Value="True">
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                                         IsIndeterminate="True"
+                                                         Width="20"
+                                                         Height="20" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <Button Grid.Column="2"
+                        Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        Style="{StaticResource DarkLoginBtn}" />
+            </Grid>
         </StackPanel>
     </Grid>
 </UserControl>

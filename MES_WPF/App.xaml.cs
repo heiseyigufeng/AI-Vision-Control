@@ -105,7 +105,11 @@ namespace MES_WPF
                 loginWindow.DialogResult = success;
                 
             };
-
+            // 添加取消事件处理
+            loginViewModel.CancelRequested += (sender, args) =>
+            {
+                loginWindow.DialogResult = false;
+            };
             // 显示登录窗口
             var result = loginWindow.ShowDialog();
 

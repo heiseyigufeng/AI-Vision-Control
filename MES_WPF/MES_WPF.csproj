@@ -49,6 +49,7 @@
   <ItemGroup>
     <Folder Include="Resources\Icons\" />
     <Folder Include="ViewModels\ProductionManagement\" />
+    <Folder Include="setup\" />
   </ItemGroup>
 
   <ItemGroup>
