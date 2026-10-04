@@ -11,17 +11,11 @@
     <Grid Background="#2F4156"
           Margin="8">
         <Grid.RowDefinitions>
-            <!-- 第1行：顶部信息栏 -->
             <RowDefinition Height="Auto" />
-            <!-- 第2行：条码 + 输入框 + OK -->
             <RowDefinition Height="Auto" />
-            <!-- 第3行：标题栏 -->
             <RowDefinition Height="Auto" />
-            <!-- 第4行：主内容区上半部分 -->
             <RowDefinition Height="*" />
-            <!-- 第5行：主内容区下半部分 -->
             <RowDefinition Height="*" />
-            <!-- 第6行：操作日志 -->
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -122,15 +116,46 @@
                                   FontSize="12"
                                   VerticalAlignment="Center"
                                   SelectedIndex="0">
-                            <ComboBoxItem Content="INPUT"
-                                          Foreground="White"
-                                          Background="#0F2438" />
-                            <ComboBoxItem Content="OBD_LabelCheck"
-                                          Foreground="White"
-                                          Background="#0F2438" />
-                            <ComboBoxItem Content="Peel-off"
-                                          Foreground="White"
-                                          Background="#0F2438" />
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Foreground"
+                                            Value="White" />
+                                    <Setter Property="Background"
+                                            Value="#0F2438" />
+                                    <Setter Property="Padding"
+                                            Value="6,4" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBoxItem">
+                                                <Border x:Name="Bd"
+                                                        Background="{TemplateBinding Background}"
+                                                        Padding="{TemplateBinding Padding}"
+                                                        SnapsToDevicePixels="True">
+                                                    <ContentPresenter HorizontalAlignment="Left"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver"
+                                                             Value="True">
+                                                        <Setter TargetName="Bd"
+                                                                Property="Background"
+                                                                Value="#1E4B7A" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected"
+                                                             Value="True">
+                                                        <Setter TargetName="Bd"
+                                                                Property="Background"
+                                                                Value="#1565A8" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                            <ComboBoxItem Content="INPUT" />
+                            <ComboBoxItem Content="OBD_LabelCheck" />
+                            <ComboBoxItem Content="Peel-off" />
                         </ComboBox>
                     </StackPanel>
 
@@ -157,7 +182,7 @@
             </ScrollViewer>
         </Border>
 
-        <!-- ===== 第2行：条码 + 输入框 + OK ===== -->
+        <!-- ===== 第2行：条码 + 输入框 + OK 按钮 ===== -->
         <Grid Grid.Row="1"
               Margin="0,0,0,6">
             <Grid.ColumnDefinitions>
@@ -166,7 +191,7 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 第1列：条码 -->
+            <!-- 条码 -->
             <Border Grid.Column="0"
                     BorderBrush="#2196F3"
                     BorderThickness="1"
@@ -180,7 +205,7 @@
                                          VerticalAlignment="Center" />
             </Border>
 
-            <!-- 第2列：输入框 -->
+            <!-- 输入框 -->
             <TextBox Grid.Column="1"
                      Text=""
                      Foreground="White"
@@ -193,19 +218,19 @@
                      VerticalContentAlignment="Center"
                      Padding="8,0" />
 
-            <!-- 第3列：OK 状态 -->
-            <Border Grid.Column="2"
+            <!-- OK 按钮 -->
+            <Button Grid.Column="2"
+                    x:Name="Btn_Detect"
+                    Height="50"
+                    Background="#0F2F1A"
                     BorderBrush="#4CAF50"
                     BorderThickness="2"
-                    Background="#0F2F1A"
-                    Height="50">
-                <TextBlock Text="OK"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Foreground="#4CAF50"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </Border>
+                    Foreground="#4CAF50"
+                    FontSize="24"
+                    FontWeight="Bold"
+                    Cursor="Hand"
+                    Content="OK"
+                    Click="Btn_Detect_Click" />
         </Grid>
 
         <!-- ===== 第3行：标题栏 ===== -->
@@ -217,14 +242,12 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!-- 左侧：Camera -->
             <TextBlock Grid.Column="0"
                        Text="Camera"
                        Foreground="White"
                        FontSize="14"
                        VerticalAlignment="Center" />
 
-            <!-- 中间：Delay Time + 输入框 -->
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Left"
@@ -245,9 +268,11 @@
                          FontSize="14"
                          VerticalContentAlignment="Center"
                          Padding="4,0" />
-                <ComboBox Width="220"
+
+                <ComboBox x:Name="cmb_DetectionClass"
+                          Width="220"
                           Height="24"
-                          Margin="6,0,0,0"
+                          Margin="6,0,6,0"
                           Background="#0F2438"
                           Foreground="White"
                           BorderBrush="#2196F3"
@@ -256,19 +281,45 @@
                           VerticalAlignment="Center"
                           SelectedIndex="0"
                           HorizontalAlignment="Left">
-                    <ComboBoxItem Content="Label_OK"
-                                  Foreground="White"
-                                  Background="#0F2438" />
-                    <ComboBoxItem Content="Label_NG"
-                                  Foreground="White"
-                                  Background="#0F2438" />
-                    <ComboBoxItem Content="Peel-off_OK"
-                                  Foreground="White"
-                                  Background="#0F2438" />
-                    <ComboBoxItem Content="Peel-off_NG"
-                                  Foreground="White"
-                                  Background="#0F2438" />
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="Foreground"
+                                    Value="White" />
+                            <Setter Property="Background"
+                                    Value="#0F2438" />
+                            <Setter Property="Padding"
+                                    Value="6,4" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ComboBoxItem">
+                                        <Border x:Name="Bd"
+                                                Background="{TemplateBinding Background}"
+                                                Padding="{TemplateBinding Padding}"
+                                                SnapsToDevicePixels="True">
+                                            <ContentPresenter HorizontalAlignment="Left"
+                                                              VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver"
+                                                     Value="True">
+                                                <Setter TargetName="Bd"
+                                                        Property="Background"
+                                                        Value="#1E4B7A" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected"
+                                                     Value="True">
+                                                <Setter TargetName="Bd"
+                                                        Property="Background"
+                                                        Value="#1565A8" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
                 </ComboBox>
+
                 <Button Content="Manual_OK"
                         Width="120"
                         Height="30"
@@ -285,24 +336,19 @@
                         BorderThickness="0"
                         FontSize="14" />
             </StackPanel>
-            <StackPanel Grid.Column="2"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center">
-
-            </StackPanel>
         </Grid>
 
         <!-- ===== 第4~5行：主内容区 ===== -->
         <Grid Grid.Row="3"
               Grid.RowSpan="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="386*" />
+                <ColumnDefinition Width="537*" />
+                <ColumnDefinition Width="461*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 左侧：相机实时画面 -->
             <Border Grid.Column="0"
+                    Grid.ColumnSpan="2"
                     BorderBrush="#2196F3"
                     BorderThickness="1"
                     Background="#0F2438"
@@ -313,14 +359,10 @@
                                FontSize="20"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
-                    <!-- 实际接入相机时，把 Image 放这里：
-                    <Image x:Name="CameraImage" Stretch="Uniform"/>
-                    -->
                 </Grid>
             </Border>
 
-            <!-- 右侧：一张拍照图，一张检测图 -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -332,7 +374,7 @@
                 <Grid Grid.Row="0"
                       Margin="0,0,0,2">
                     <TextBlock x:Name="OrigPathText"
-                        Text="Orig Path: Pictures\Screenshot\picture1.jpeg"
+                               Text="Orig Path: -"
                                Foreground="#8FA3BF"
                                FontSize="12"
                                VerticalAlignment="Center"
@@ -350,17 +392,14 @@
                     <Border Grid.Column="0"
                             BorderBrush="#2196F3"
                             BorderThickness="1"
-                            Background="#0F2438"  >
+                            Background="#0F2438">
                         <Grid>
-                            <!-- 占位文字，有图时隐藏 -->
                             <TextBlock x:Name="PhotoPlaceholder"
                                        Text="Photo"
-                                       Foreground="White"
+                                       Foreground="#4A6B8A"
                                        FontSize="20"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center" />
-
-                            <!-- 图片显示控件 -->
                             <Image x:Name="PhotoImage"
                                    Stretch="Uniform"
                                    Visibility="Collapsed" />
@@ -370,7 +409,6 @@
                                 Orientation="Vertical"
                                 VerticalAlignment="Center"
                                 Margin="6,0,0,0">
-
                         <Button x:Name="Btn_Load"
                                 Content="Load"
                                 Width="40"
@@ -400,7 +438,8 @@
                 <!-- 侦测图路径 -->
                 <Grid Grid.Row="2"
                       Margin="0,3,0,2">
-                    <TextBlock Text="Result Path: Pictures\Screenshot\picture1.jpeg"
+                    <TextBlock x:Name="ResultPathText"
+                               Text="Result Path: -"
                                Foreground="#8FA3BF"
                                FontSize="12"
                                VerticalAlignment="Center"
@@ -419,11 +458,17 @@
                             BorderBrush="#2196F3"
                             BorderThickness="1"
                             Background="#0F2438">
-                        <TextBlock Text="Detection image"
-                                   Foreground="White"
-                                   FontSize="20"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
+                        <Grid>
+                            <TextBlock x:Name="ResultPlaceholder"
+                                       Text="Detection image"
+                                       Foreground="#4A6B8A"
+                                       FontSize="20"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                            <Image x:Name="ResultImage"
+                                   Stretch="Uniform"
+                                   Visibility="Collapsed" />
+                        </Grid>
                     </Border>
                     <Button Grid.Column="1"
                             Content="Open"
@@ -447,13 +492,84 @@
                 BorderThickness="1"
                 Background="#0F2438"
                 Margin="0,6,0,0"
-                MinHeight="60">
-            <TextBlock Text="operate log"
-                       Foreground="#8FA3BF"
-                       FontSize="14"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center" />
-        </Border>
+                MinHeight="80"
+                MaxHeight="100">
+            <DataGrid x:Name="dgOperationLog"
+                      ItemsSource="{Binding OperationLogs, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0"
+                      Background="#0F2438"
+                      Foreground="White"
+                      RowHeight="28"
+                      FontSize="12"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False">
+                <DataGrid.Resources>
+                    <!-- 表头样式 -->
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background"
+                                Value="#132844" />
+                        <Setter Property="Foreground"
+                                Value="White" />
+                        <Setter Property="FontWeight"
+                                Value="SemiBold" />
+                        <Setter Property="Padding"
+                                Value="8" />
+                        <Setter Property="Height"
+                                Value="30" />
+                        <Setter Property="BorderBrush"
+                                Value="#2196F3" />
+                        <Setter Property="BorderThickness"
+                                Value="0,0,1,1" />
+                    </Style>
+                </DataGrid.Resources>
 
+                <DataGrid.Columns>
+                    <!-- 1. 时间 -->
+                    <DataGridTextColumn Header="Time"
+                                        Binding="{Binding Time}"
+                                        Width="180" />
+
+                    <!-- 2. 状态 -->
+                    <DataGridTextColumn Header="Status"
+                                        Binding="{Binding Status}"
+                                        Width="80" />
+
+                    <!-- 3. 详细 -->
+                    <DataGridTextColumn Header="Detail"
+                                        Binding="{Binding Detail}"
+                                        Width="*" />
+                </DataGrid.Columns>
+
+                <!-- 行样式：OK 绿底，NG 红底 -->
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background"
+                                Value="#0F2438" />
+                        <Setter Property="Foreground"
+                                Value="White" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}"
+                                         Value="OK">
+                                <Setter Property="Background"
+                                        Value="#0F2F1A" />
+                                <Setter Property="Foreground"
+                                        Value="#4CAF50" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}"
+                                         Value="NG">
+                                <Setter Property="Background"
+                                        Value="#2F1A1A" />
+                                <Setter Property="Foreground"
+                                        Value="#F44336" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
+        </Border>
     </Grid>
 </UserControl>

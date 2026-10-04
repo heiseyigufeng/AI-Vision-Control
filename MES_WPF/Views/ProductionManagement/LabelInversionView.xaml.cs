@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using MES_WPF.Services;
 
 namespace MES_WPF.Views.ProductionManagement
 {
@@ -11,36 +16,132 @@ namespace MES_WPF.Views.ProductionManagement
     /// </summary>
     public partial class LabelInversionView : UserControl
     {
-        // 当前 Photo 图片路径
+        // ========== 路径字段 ==========
         private string _currentPhotoPath = "";
-        // 当前 Detection 图片路径
         private string _currentResultPath = "";
 
-        // 两个文件夹的完整路径（程序所在目录下）
+        // 程序所在目录 + 两个子文件夹
         private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
         private static readonly string OrigImageDir = Path.Combine(BaseDir, "OrigImage");
         private static readonly string ResultImageDir = Path.Combine(BaseDir, "ResultImage");
+        private static readonly string LogDir = Path.Combine(BaseDir, "logs");
+
+        // ========== YOLO 相关 ==========
+        private static readonly string ModelPath = Path.Combine(BaseDir, "Assets", "family.onnx");
+        private YoloOnnxDetector _detector;
+
+        // ========== 操作日志 ==========
+        public ObservableCollection<LogItem> OperationLogs { get; } = new ObservableCollection<LogItem>();
 
         public LabelInversionView()
         {
             InitializeComponent();
 
-            // 进入界面时创建两个文件夹
+            // 让 XAML 里的 DataGrid 能找到 OperationLogs
+            DataContext = this;
+
             InitializeFolders();
+            LoadDetectionClasses();
+            InitializeYolo();
         }
 
         /// <summary>
-        /// 创建 OrigImage 和 ResultImage 两个文件夹（不存在时创建）
+        /// 日志项
+        /// </summary>
+        public class LogItem
+        {
+            public string Time { get; set; }
+            public string Status { get; set; }
+            public string Detail { get; set; }
+        }
+
+        /// <summary>
+        /// 初始化 YOLO
+        /// </summary>
+        private void InitializeYolo()
+        {
+            try
+            {
+                if (!File.Exists(ModelPath))
+                {
+                    MessageBox.Show($"ONNX model not found: {ModelPath}", "Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var classNames = cmb_DetectionClass.Items
+                    .Cast<object>()
+                    .Select(o => o.ToString())
+                    .ToArray();
+
+                if (classNames.Length == 0)
+                {
+                    MessageBox.Show("No detection class loaded.", "Warning",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                _detector = new YoloOnnxDetector(ModelPath, classNames);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load YOLO model: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// 加载检测类别
+        /// </summary>
+        private void LoadDetectionClasses()
+        {
+            try
+            {
+                string filePath = Path.Combine(BaseDir, "Assets", "DetectionClass.txt");
+
+                if (!File.Exists(filePath))
+                {
+                    MessageBox.Show($"DetectionClass.txt not found: {filePath}", "Warning",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var lines = File.ReadAllLines(filePath)
+                    .Select(l => l.Trim())
+                    .Where(l => !string.IsNullOrEmpty(l))
+                    .ToList();
+
+                cmb_DetectionClass.Items.Clear();
+
+                foreach (var line in lines)
+                {
+                    string className = line;
+                    if (line.Contains(':'))
+                        className = line.Substring(line.IndexOf(':') + 1).Trim();
+
+                    cmb_DetectionClass.Items.Add(className);
+                }
+
+                if (cmb_DetectionClass.Items.Count > 0)
+                    cmb_DetectionClass.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load detection classes: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// 创建文件夹
         /// </summary>
         private void InitializeFolders()
         {
             try
             {
-                if (!Directory.Exists(OrigImageDir))
-                    Directory.CreateDirectory(OrigImageDir);
-
-                if (!Directory.Exists(ResultImageDir))
-                    Directory.CreateDirectory(ResultImageDir);
+                if (!Directory.Exists(OrigImageDir)) Directory.CreateDirectory(OrigImageDir);
+                if (!Directory.Exists(ResultImageDir)) Directory.CreateDirectory(ResultImageDir);
+                if (!Directory.Exists(LogDir)) Directory.CreateDirectory(LogDir);
             }
             catch (Exception ex)
             {
@@ -50,7 +151,7 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// Load：打开文件对话框，选择图片并显示到 Photo 区域
+        /// Load 按钮
         /// </summary>
         private void Btn_Load_Click(object sender, RoutedEventArgs e)
         {
@@ -67,7 +168,6 @@ namespace MES_WPF.Views.ProductionManagement
 
                 try
                 {
-                    // 加载图片
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -75,19 +175,12 @@ namespace MES_WPF.Views.ProductionManagement
                     bitmap.EndInit();
                     bitmap.Freeze();
 
-                    // 显示到 Photo 区域
                     PhotoImage.Source = bitmap;
                     PhotoImage.Visibility = Visibility.Visible;
                     PhotoPlaceholder.Visibility = Visibility.Collapsed;
 
-                    // 保存当前路径
                     _currentPhotoPath = filePath;
-
-                    // 更新路径文字
-                    if (OrigPathText != null)
-                    {
-                        OrigPathText.Text = "Orig Path: " + filePath;
-                    }
+                    OrigPathText.Text = "Orig Path: " + filePath;
                 }
                 catch (Exception ex)
                 {
@@ -98,7 +191,149 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// Photo 的 Open：打开 Photo 图片所在文件夹，并选中该文件
+        /// OK 按钮：执行 YOLO 侦测
+        /// </summary>
+        private async void Btn_Detect_Click(object sender, RoutedEventArgs e)
+        {
+            if (_detector == null)
+            {
+                MessageBox.Show("YOLO model is not loaded.", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_currentPhotoPath) || !File.Exists(_currentPhotoPath))
+            {
+                MessageBox.Show("Please load an image first.", "Notice",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            string selectedClass = cmb_DetectionClass.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedClass))
+            {
+                MessageBox.Show("Please select a detection class.", "Notice",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                Btn_Detect.IsEnabled = false;
+
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string resultPath = Path.Combine(ResultImageDir, $"result_{timestamp}.jpg");
+
+                DetectionResult detResult = await Task.Run(() =>
+                    _detector.Detect(_currentPhotoPath, resultPath, selectedClass));
+
+                // 显示结果图
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(resultPath, UriKind.Absolute);
+                bitmap.EndInit();
+                bitmap.Freeze();
+
+                ResultImage.Source = bitmap;
+                ResultImage.Visibility = Visibility.Visible;
+                ResultPlaceholder.Visibility = Visibility.Collapsed;
+
+                _currentResultPath = resultPath;
+                ResultPathText.Text = "Result Path: " + resultPath;
+
+                // 判断结果
+                bool found = detResult.Detections.Count > 0;
+
+                // 更新按钮颜色
+                if (found)
+                {
+                    Btn_Detect.Content = "OK";
+                    Btn_Detect.Foreground = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50));
+                    Btn_Detect.Background = new SolidColorBrush(Color.FromRgb(0x0F, 0x2F, 0x1A));
+                    Btn_Detect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50));
+                }
+                else
+                {
+                    Btn_Detect.Content = "NG";
+                    Btn_Detect.Foreground = new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
+                    Btn_Detect.Background = new SolidColorBrush(Color.FromRgb(0x2F, 0x1A, 0x1A));
+                    Btn_Detect.BorderBrush = new SolidColorBrush(Color.FromRgb(0xF4, 0x43, 0x36));
+                }
+
+                // ========== 写日志 ==========
+                AddLog(found, detResult, selectedClass);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Detection failed: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                Btn_Detect.IsEnabled = true;
+            }
+        }
+
+        /// <summary>
+        /// 添加一条日志（DataGrid + 文件）
+        /// </summary>
+        private void AddLog(bool found, DetectionResult detResult, string selectedClass)
+        {
+            string time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            string status = found ? "OK" : "NG";
+            string detail;
+
+            if (found)
+            {
+                // 取置信度最高的那个
+                var best = detResult.Detections.OrderByDescending(d => d.Confidence).First();
+
+                // 图片宽高（从 Detections 拿不到，从原图读一次，或者从记录里拿）
+                int imgW = 0, imgH = 0;
+                if (File.Exists(_currentPhotoPath))
+                {
+                    using var mat = OpenCvSharp.Cv2.ImRead(_currentPhotoPath);
+                    imgW = mat.Width;
+                    imgH = mat.Height;
+                }
+
+                // 框中心点
+                int cx = best.X + best.Width / 2;
+                int cy = best.Y + best.Height / 2;
+
+                detail = $"Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
+                         $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
+            }
+            else
+            {
+                detail = "Not detected: target not found";
+            }
+
+            // 1. 加入 DataGrid
+            OperationLogs.Insert(0, new LogItem
+            {
+                Time = time,
+                Status = status,
+                Detail = detail
+            });
+
+            // 2. 写入按天分文件的日志
+            try
+            {
+                string logFile = Path.Combine(LogDir, $"{DateTime.Now:yyyy-MM-dd}.log");
+                string line = $"{time}\t{status}\t{detail}";
+                File.AppendAllText(logFile, line + Environment.NewLine);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to write log file: {ex.Message}", "Warning",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Photo 的 Open
         /// </summary>
         private void Btn_Open_Click(object sender, RoutedEventArgs e)
         {
@@ -106,7 +341,7 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// Detection 的 Open：打开 Detection 图片所在文件夹，并选中该文件
+        /// Detection 的 Open
         /// </summary>
         private void Btn_OpenResult_Click(object sender, RoutedEventArgs e)
         {
@@ -114,11 +349,10 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// 打开文件所在文件夹，并选中该文件
+        /// 打开文件夹并选中文件
         /// </summary>
         private void OpenFolderAndSelectFile(string filePath)
         {
-            // 检查路径是否为空
             if (string.IsNullOrEmpty(filePath))
             {
                 MessageBox.Show("Images have not yet loaded.", "Message",
@@ -126,7 +360,6 @@ namespace MES_WPF.Views.ProductionManagement
                 return;
             }
 
-            // 检查文件是否存在
             if (!File.Exists(filePath))
             {
                 MessageBox.Show($"File does not exist: {filePath}", "Message",
@@ -136,7 +369,6 @@ namespace MES_WPF.Views.ProductionManagement
 
             try
             {
-                // /select, "文件路径" → 打开文件夹并选中该文件
                 System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
             }
             catch (Exception ex)
