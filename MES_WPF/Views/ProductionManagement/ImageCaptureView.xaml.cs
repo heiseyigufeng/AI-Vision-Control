@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using OpenCvSharp;
 using MES_WPF.Services;
@@ -22,6 +25,7 @@ namespace MES_WPF.Views.ProductionManagement
 
         // ========== 保存文件夹 ==========
         private string _saveFolder = "";
+        private string _lastSavedFilePath = "";
 
         // ========== 序号（当天递增） ==========
         private int _sequenceNumber = 0;
@@ -33,31 +37,74 @@ namespace MES_WPF.Views.ProductionManagement
         // ========== 当前帧缓存 ==========
         private Mat _lastFrame;
 
+        // ========== 屏幕采集模式 ==========
+        private bool _isScreenMode = false;
+
+        // ==================== P/Invoke（纯 WPF 抓屏） ====================
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDesktopWindow();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr CreateCompatibleBitmap(IntPtr hDC, int nWidth, int nHeight);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool BitBlt(
+            IntPtr hdcDest, int nXDest, int nYDest, int nWidth, int nHeight,
+            IntPtr hdcSrc, int nXSrc, int nYSrc, int dwRop);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteDC(IntPtr hDC);
+
+        private const int SRCCOPY = 0x00CC0020;
+
+        // ==================== 构造函数 ====================
+
         public ImageCaptureView(CameraService cameraService)
         {
             InitializeComponent();
 
-            // DI 注入的相机服务（单例）
             _cameraService = cameraService ?? new CameraService();
 
             DataContext = this;
 
-            // 进入页面：如果相机已打开，自动启动预览
+            // 进入页面
             Loaded += (s, e) =>
             {
-                if (_cameraService.IsOpened)
+                if (_cameraService.IsOpened && !_isScreenMode)
                 {
                     StartPreview();
                 }
+
+                Focusable = true;
+                Focus();
             };
 
-            // 离开页面：只停定时器，不关相机（单例，由 App.OnExit 统一关闭）
+            // 离开页面
             Unloaded += (s, e) =>
             {
                 StopPreview();
                 _lastFrame?.Dispose();
                 _lastFrame = null;
             };
+
+            // 键盘：空格键拍照
+            KeyDown += ImageCaptureView_KeyDown;
         }
 
         // ==================== 日志项 ====================
@@ -69,18 +116,29 @@ namespace MES_WPF.Views.ProductionManagement
             public string Detail { get; set; }
         }
 
+        // ==================== 键盘 ====================
+
+        private void ImageCaptureView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Space)
+            {
+                e.Handled = true;
+                Btn_TakePicture_Click(this, new RoutedEventArgs());
+            }
+        }
+
         // ==================== 相机控制 ====================
 
-        /// <summary>
-        /// Open Camera 按钮
-        /// </summary>
         private void Btn_OpenCamera_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                _isScreenMode = false;
+
                 if (_cameraService.IsOpened)
                 {
                     AddLog("OK", "Camera already opened.");
+                    StartPreview();
                     return;
                 }
 
@@ -100,14 +158,11 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        /// <summary>
-        /// Close Camera 按钮
-        /// </summary>
         private void Btn_CloseCamera_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (!_cameraService.IsOpened)
+                if (!_cameraService.IsOpened && !_isScreenMode)
                 {
                     AddLog("NG", "Camera is not opened.");
                     return;
@@ -115,10 +170,11 @@ namespace MES_WPF.Views.ProductionManagement
 
                 StopPreview();
                 _cameraService.Close();
+                _isScreenMode = false;
 
-                // 清空画面
                 CameraImage.Source = null;
                 CameraPlaceholder.Visibility = Visibility.Visible;
+                CameraPlaceholder.Text = "Real-time camera";
 
                 AddLog("OK", "Camera closed.");
             }
@@ -129,26 +185,46 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// 启动预览定时器
+        /// Switch Screen：切换为当前屏幕采集
         /// </summary>
+        private void Btn_SwitchScreen_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _isScreenMode = true;
+
+                if (_cameraService.IsOpened)
+                {
+                    _cameraService.Close();
+                }
+
+                CameraPlaceholder.Visibility = Visibility.Collapsed;
+                StartPreview();
+
+                AddLog("OK", "Switched to screen capture mode.");
+            }
+            catch (Exception ex)
+            {
+                AddLog("NG", $"Switch screen exception: {ex.Message}");
+            }
+        }
+
+        // ==================== 预览控制 ====================
+
         private void StartPreview()
         {
             CameraPlaceholder.Visibility = Visibility.Collapsed;
 
-            // 避免重复启动
             if (_previewTimer != null) return;
 
             _previewTimer = new System.Windows.Threading.DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(50)   // 约 20fps
+                Interval = TimeSpan.FromMilliseconds(50)
             };
             _previewTimer.Tick += (s, e) => UpdatePreview();
             _previewTimer.Start();
         }
 
-        /// <summary>
-        /// 停止预览定时器
-        /// </summary>
         private void StopPreview()
         {
             if (_previewTimer != null)
@@ -158,21 +234,26 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        /// <summary>
-        /// 刷新相机预览
-        /// </summary>
         private void UpdatePreview()
         {
             try
             {
-                var frame = _cameraService.GrabFrame();
+                Mat frame;
+
+                if (_isScreenMode)
+                {
+                    frame = CaptureScreenMat();
+                }
+                else
+                {
+                    frame = _cameraService.GrabFrame();
+                }
+
                 if (frame == null) return;
 
-                // 缓存当前帧
                 _lastFrame?.Dispose();
                 _lastFrame = frame;
 
-                // Mat → BitmapImage
                 var bitmap = MatToBitmapSource(frame);
                 if (bitmap != null)
                 {
@@ -181,15 +262,95 @@ namespace MES_WPF.Views.ProductionManagement
             }
             catch
             {
-                // 忽略预览错误
+                // 忽略
+            }
+        }
+
+        // ==================== 屏幕采集（纯 WPF） ====================
+
+        /// <summary>
+        /// 抓取主屏幕，返回 OpenCV Mat（纯 WPF，无 WindowsForms 依赖）
+        /// </summary>
+        private Mat CaptureScreenMat()
+        {
+            try
+            {
+                int width = (int)SystemParameters.PrimaryScreenWidth;
+                int height = (int)SystemParameters.PrimaryScreenHeight;
+
+                if (width <= 0 || height <= 0) return null;
+
+                IntPtr desktopWnd = GetDesktopWindow();
+                IntPtr desktopDC = GetWindowDC(desktopWnd);
+                if (desktopDC == IntPtr.Zero) return null;
+
+                IntPtr memDC = CreateCompatibleDC(desktopDC);
+                IntPtr hBitmap = CreateCompatibleBitmap(desktopDC, width, height);
+                IntPtr oldBitmap = SelectObject(memDC, hBitmap);
+
+                bool ok = BitBlt(memDC, 0, 0, width, height, desktopDC, 0, 0, SRCCOPY);
+
+                Mat mat = null;
+                if (ok)
+                {
+                    var bmpSource = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                        hBitmap,
+                        IntPtr.Zero,
+                        System.Windows.Int32Rect.Empty,
+                        System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+
+                    mat = BitmapSourceToMat(bmpSource);
+                }
+
+                SelectObject(memDC, oldBitmap);
+                DeleteObject(hBitmap);
+                DeleteDC(memDC);
+                ReleaseDC(desktopWnd, desktopDC);
+
+                return mat;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// WPF BitmapSource → OpenCV Mat
+        /// </summary>
+        private Mat BitmapSourceToMat(System.Windows.Media.Imaging.BitmapSource bmpSource)
+        {
+            try
+            {
+                var converted = new System.Windows.Media.Imaging.FormatConvertedBitmap(
+                    bmpSource,
+                    System.Windows.Media.PixelFormats.Bgra32,
+                    null,
+                    0);
+
+                int width = converted.PixelWidth;
+                int height = converted.PixelHeight;
+                int stride = width * 4;
+                byte[] pixels = new byte[stride * height];
+
+                converted.CopyPixels(pixels, stride, 0);
+
+                using var matBgra = new Mat(height, width, MatType.CV_8UC4);
+                Marshal.Copy(pixels, 0, matBgra.Data, pixels.Length);
+
+                var matBgr = new Mat();
+                Cv2.CvtColor(matBgra, matBgr, ColorConversionCodes.BGRA2BGR);
+
+                return matBgr;
+            }
+            catch
+            {
+                return null;
             }
         }
 
         // ==================== 保存文件夹 ====================
 
-        /// <summary>
-        /// Select Folder 按钮
-        /// </summary>
         private void Btn_SelectFolder_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -215,35 +376,60 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
+        /// <summary>
+        /// Open Folder：打开最后保存图片的文件夹
+        /// </summary>
+        private void Btn_OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_lastSavedFilePath) && File.Exists(_lastSavedFilePath))
+                {
+                    Process.Start("explorer.exe", $"/select,\"{_lastSavedFilePath}\"");
+                    AddLog("OK", $"Opened folder and selected: {_lastSavedFilePath}");
+                }
+                else if (!string.IsNullOrEmpty(_saveFolder) && Directory.Exists(_saveFolder))
+                {
+                    Process.Start("explorer.exe", _saveFolder);
+                    AddLog("OK", $"Opened folder: {_saveFolder}");
+                }
+                else
+                {
+                    AddLog("NG", "No saved folder yet. Please take a picture first.");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLog("NG", $"Open folder exception: {ex.Message}");
+            }
+        }
+
         // ==================== 拍照 ====================
 
-        /// <summary>
-        /// Take a Picture 按钮
-        /// </summary>
         private void Btn_TakePicture_Click(object sender, RoutedEventArgs e)
         {
-            // 检查 1：文件夹是否已选
+            // 检查 1：文件夹
             if (string.IsNullOrEmpty(_saveFolder) || !Directory.Exists(_saveFolder))
             {
                 AddLog("NG", "Please select a save folder first.");
                 return;
             }
 
-            // 检查 2：相机是否打开
-            if (!_cameraService.IsOpened)
+            // 检查 2：数据源
+            if (!_isScreenMode && !_cameraService.IsOpened)
             {
                 AddLog("NG", "Camera is not opened.");
                 return;
             }
 
-            // 检查 3：是否有帧
+            // 检查 3：帧
             if (_lastFrame == null || _lastFrame.Empty())
             {
                 AddLog("NG", "No frame captured.");
                 return;
             }
 
-            // 检查 4：是否是纯色画面（无图）
+            // 检查 4：纯色
             if (IsSolidColor(_lastFrame))
             {
                 AddLog("NG", "Camera image is blank (solid color).");
@@ -252,14 +438,13 @@ namespace MES_WPF.Views.ProductionManagement
 
             try
             {
-                // 生成文件名：yyyyMMdd_HHmmss_NNNN.jpg
                 string fileName = GenerateFileName();
                 string fullPath = Path.Combine(_saveFolder, fileName);
 
-                // 保存
                 Cv2.ImWrite(fullPath, _lastFrame);
 
-                // 显示到右侧
+                _lastSavedFilePath = fullPath;
+
                 var bitmap = MatToBitmapSource(_lastFrame);
                 if (bitmap != null)
                 {
@@ -268,7 +453,6 @@ namespace MES_WPF.Views.ProductionManagement
                     PhotoPlaceholder.Visibility = Visibility.Collapsed;
                 }
 
-                // 更新路径文字
                 PhotoPathText.Text = "Photo: " + fullPath;
 
                 AddLog("OK", $"Saved: {fullPath}");
@@ -279,15 +463,10 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        /// <summary>
-        /// 生成文件名：yyyyMMdd_HHmmss_NNNN.jpg
-        /// 序号按天重置，从 0001 开始
-        /// </summary>
         private string GenerateFileName()
         {
             DateTime now = DateTime.Now;
 
-            // 跨天，重置序号
             if (now.Date != _lastSequenceDate.Date)
             {
                 _sequenceNumber = 0;
@@ -299,14 +478,10 @@ namespace MES_WPF.Views.ProductionManagement
             return $"{now:yyyyMMdd_HHmmss}_{_sequenceNumber:D4}.jpg";
         }
 
-        /// <summary>
-        /// 判断画面是否为纯色（无图/黑屏/白屏）
-        /// </summary>
         private bool IsSolidColor(Mat frame)
         {
             try
             {
-                // 采样：缩到很小，看标准差
                 using var small = new Mat();
                 Cv2.Resize(frame, small, new OpenCvSharp.Size(64, 64));
 
@@ -314,7 +489,6 @@ namespace MES_WPF.Views.ProductionManagement
                 var stddev = new Scalar();
                 Cv2.MeanStdDev(small, out mean, out stddev);
 
-                // 如果标准差很低，说明颜色几乎一致
                 double avgStd = (stddev.Val0 + stddev.Val1 + stddev.Val2) / 3.0;
                 return avgStd < 3.0;
             }
@@ -324,16 +498,12 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        // ==================== 工具方法 ====================
+        // ==================== 工具 ====================
 
-        /// <summary>
-        /// OpenCV Mat → WPF BitmapSource
-        /// </summary>
         private System.Windows.Media.Imaging.BitmapSource MatToBitmapSource(Mat mat)
         {
             try
             {
-                // Mat 是 BGR，转 BGRA
                 using var bgra = new Mat();
                 Cv2.CvtColor(mat, bgra, ColorConversionCodes.BGR2BGRA);
 
@@ -342,7 +512,7 @@ namespace MES_WPF.Views.ProductionManagement
                 int stride = (int)bgra.Step();
                 byte[] data = new byte[stride * height];
 
-                System.Runtime.InteropServices.Marshal.Copy(bgra.Data, data, 0, data.Length);
+                Marshal.Copy(bgra.Data, data, 0, data.Length);
 
                 return System.Windows.Media.Imaging.BitmapSource.Create(
                     width, height, 96, 96,
@@ -355,9 +525,6 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        /// <summary>
-        /// 添加一条操作日志
-        /// </summary>
         private void AddLog(string status, string detail)
         {
             string time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -370,4 +537,4 @@ namespace MES_WPF.Views.ProductionManagement
             });
         }
     }
-}
+}  
