@@ -41,11 +41,14 @@ namespace MES_WPF
         {
             base.OnStartup(e);
 
+            // ========== 注册进程退出事件（兜底） ==========
+            AppDomain.CurrentDomain.ProcessExit += (s, args) => SafeCloseCamera();
+
             // 配置依赖注入
             var services = new ServiceCollection();
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
-            
+
             try
             {
                 // 初始化数据库
@@ -69,11 +72,13 @@ namespace MES_WPF
             var loginViewModel = _serviceProvider.GetRequiredService<LoginViewModel>();
             var loginView = _serviceProvider.GetRequiredService<LoginView>();
             loginView.DataContext = loginViewModel;
+
             // 登录成功，显示主窗口
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
             Application.Current.MainWindow = mainWindow;
             _mainWindow = mainWindow; // 保持引用，防止垃圾回收
-            // 创建包含LoginView的窗口
+
+            // 创建包含 LoginView 的窗口
             var loginWindow = new Window
             {
                 Title = "F12 AI Vision",
@@ -90,6 +95,7 @@ namespace MES_WPF
                 AllowsTransparency = true,
                 Background = System.Windows.Media.Brushes.Transparent
             };
+
             loginWindow.MouseLeftButtonDown += (s, e) =>
             {
                 if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
@@ -97,25 +103,26 @@ namespace MES_WPF
                     loginWindow.DragMove();
                 }
             };
-            // 添加登录完成事件处理
+
+            // 登录完成事件
             bool loginSuccess = false;
             loginViewModel.LoginCompleted += (sender, success) =>
             {
                 loginSuccess = success;
                 loginWindow.DialogResult = success;
-                
             };
-            // 添加取消事件处理
+
+            // 取消事件
             loginViewModel.CancelRequested += (sender, args) =>
             {
                 loginWindow.DialogResult = false;
             };
+
             // 显示登录窗口
             var result = loginWindow.ShowDialog();
 
             if (result.HasValue && result.Value)
             {
-               
                 mainWindow.Show();
             }
             else
@@ -124,16 +131,30 @@ namespace MES_WPF
                 Shutdown();
             }
         }
+
+        /// <summary>
+        /// 程序退出：关闭相机
+        /// </summary>
         protected override void OnExit(ExitEventArgs e)
+        {
+            SafeCloseCamera();
+            base.OnExit(e);
+        }
+
+        /// <summary>
+        /// 安全关闭相机（检查是否已打开）
+        /// </summary>
+        private static void SafeCloseCamera()
         {
             try
             {
                 var camera = _serviceProvider?.GetService<CameraService>();
-                camera?.Close();
+                if (camera != null && camera.IsOpened)
+                {
+                    camera.Close();
+                }
             }
             catch { }
-
-            base.OnExit(e);
         }
 
         private void ConfigureServices(ServiceCollection services)
@@ -216,8 +237,6 @@ namespace MES_WPF
             services.AddSingleton<IResourceService, ResourceService>();
             services.AddSingleton<IRouteStepService, RouteStepService>();
 
-
-
             // 设备管理模块服务
             services.AddSingleton<IMaintenanceOrderService, MaintenanceOrderService>();
             services.AddSingleton<IMaintenanceExecutionService, MaintenanceExecutionService>();
@@ -227,6 +246,7 @@ namespace MES_WPF
             services.AddSingleton<IEquipmentParameterLogService, EquipmentParameterLogService>();
             services.AddSingleton<ISpareService, SpareService>();
             services.AddSingleton<ISpareUsageService, SpareUsageService>();
+
             // 注册视图模型
             services.AddSingleton<LoginViewModel>();
             services.AddSingleton<MenuViewModel>();
@@ -256,7 +276,6 @@ namespace MES_WPF
             services.AddSingleton<ProductViewModel>();
             services.AddSingleton<ResourceViewModel>();
 
-
             // 设备管理模块视图
             services.AddSingleton<MaintenanceExecutionView>();
             services.AddSingleton<MaintenanceItemView>();
@@ -264,7 +283,6 @@ namespace MES_WPF
             services.AddSingleton<MaintenancePlanView>();
             services.AddSingleton<ParameterLogView>();
             services.AddSingleton<SpareView>();
-
 
             // 注册视图
             services.AddSingleton<DepartmentManagementView>();
@@ -280,7 +298,6 @@ namespace MES_WPF
             services.AddTransient<LabelInversionView>();
             services.AddTransient<LabelInversionManualView>();
 
-
             // 基础信息模块视图
             services.AddSingleton<BOMView>();
             services.AddSingleton<EquipmentView>();
@@ -288,7 +305,7 @@ namespace MES_WPF
             services.AddSingleton<ProcessRouteView>();
             services.AddSingleton<ProductView>();
             services.AddSingleton<ResourceView>();
-        
+
             services.AddTransient<LoginView>();
             services.AddTransient<MainWindow>();
             services.AddTransient<DashboardView>();
@@ -304,4 +321,4 @@ namespace MES_WPF
             return _serviceProvider.GetService<T>();
         }
     }
-} 
+}
