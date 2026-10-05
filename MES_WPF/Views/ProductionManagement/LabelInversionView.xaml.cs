@@ -60,16 +60,12 @@ namespace MES_WPF.Views.ProductionManagement
             LoadDetectionClasses();
             InitializeYolo();
 
-            // 进入页面：若相机已打开，自动预览
             Loaded += (s, e) =>
             {
                 if (_cameraService.IsOpened)
-                {
                     StartPreview();
-                }
             };
 
-            // 离开页面：只停定时器，不关相机
             Unloaded += (s, e) =>
             {
                 StopPreview();
@@ -103,7 +99,8 @@ namespace MES_WPF.Views.ProductionManagement
                 bool ok = _cameraService.Open();
                 if (!ok)
                 {
-                    AddLog("NG", "Failed to open camera.");
+                    // 显示具体原因
+                    AddLog("NG", $"Failed to open camera: {_cameraService.LastError}");
                     return;
                 }
 
@@ -169,9 +166,7 @@ namespace MES_WPF.Views.ProductionManagement
 
                 var bitmap = MatToBitmapSource(frame);
                 if (bitmap != null)
-                {
                     CameraImage.Source = bitmap;
-                }
             }
             catch { }
         }
@@ -312,7 +307,9 @@ namespace MES_WPF.Views.ProductionManagement
                     .Where(l => !string.IsNullOrEmpty(l))
                     .ToList();
 
+                // 清空两个 ComboBox
                 cmb_DetectionClass.Items.Clear();
+                cmb_DetectionClass_NG.Items.Clear();
 
                 foreach (var line in lines)
                 {
@@ -321,10 +318,14 @@ namespace MES_WPF.Views.ProductionManagement
                         className = line.Substring(line.IndexOf(':') + 1).Trim();
 
                     cmb_DetectionClass.Items.Add(className);
+                    cmb_DetectionClass_NG.Items.Add(className);
                 }
 
                 if (cmb_DetectionClass.Items.Count > 0)
                     cmb_DetectionClass.SelectedIndex = 0;
+
+                if (cmb_DetectionClass_NG.Items.Count > 0)
+                    cmb_DetectionClass_NG.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
@@ -376,7 +377,7 @@ namespace MES_WPF.Views.ProductionManagement
                     _currentSavedOrigPath = "";
                     OrigPathText.Text = "Orig Path: " + filePath;
 
-                    // ========== 自动侦测 ==========
+                    // 自动侦测
                     await DetectFromLoadedImageAsync(filePath);
                 }
                 catch (Exception ex)
@@ -386,21 +387,23 @@ namespace MES_WPF.Views.ProductionManagement
                 }
             }
         }
+
         /// <summary>
         /// Load 图片后自动侦测
         /// </summary>
         private async Task DetectFromLoadedImageAsync(string imagePath)
         {
-            // 检查 YOLO 模型
             if (_detector == null)
             {
                 MessageBox.Show("YOLO model is not loaded.", "Error");
                 return;
             }
 
-            // 检查检测类别
-            string selectedClass = cmb_DetectionClass.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedClass))
+            // 读两个 ComboBox 的值
+            string okClass = cmb_DetectionClass.SelectedItem?.ToString() ?? "";
+            string ngClass = cmb_DetectionClass_NG.SelectedItem?.ToString() ?? "";
+
+            if (string.IsNullOrEmpty(okClass) && string.IsNullOrEmpty(ngClass))
             {
                 MessageBox.Show("Please select a detection class.", "Notice");
                 return;
@@ -416,11 +419,9 @@ namespace MES_WPF.Views.ProductionManagement
             {
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
-                // 结果图用 result_Load_ 开头
                 string resultPath = Path.Combine(ResultImageDir, $"result_Load_{timestamp}.jpg");
-
-                // 保存原图（保留原命名，orig_Load_）
                 string origSavePath = Path.Combine(OrigImageDir, $"orig_Load_{timestamp}.jpg");
+
                 try
                 {
                     File.Copy(imagePath, origSavePath, true);
@@ -432,9 +433,9 @@ namespace MES_WPF.Views.ProductionManagement
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
-                // 执行检测
+                // 传 null，返回所有类别
                 DetectionResult detResult = await Task.Run(() =>
-                    _detector.Detect(imagePath, resultPath, selectedClass, confThreshold));
+                    _detector.Detect(imagePath, resultPath, null, confThreshold));
 
                 // 显示结果图
                 var bitmap = new BitmapImage();
@@ -452,10 +453,11 @@ namespace MES_WPF.Views.ProductionManagement
                 ResultPathText.Text = "Result Path: " + resultPath;
 
                 // 判断 OK / NG
-                bool found = detResult.ValidDetections.Count > 0;
+                bool finalOK;
+                string reason;
+                JudgeResult(detResult, okClass, ngClass, out finalOK, out reason);
 
-                // 写日志
-                AddDetectionLog(found, detResult, selectedClass);
+                AddDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
             }
             catch (Exception ex)
             {
@@ -463,6 +465,7 @@ namespace MES_WPF.Views.ProductionManagement
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         // ==================== 条码 KeyDown ====================
 
         private void Txt_Barcode_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -492,9 +495,11 @@ namespace MES_WPF.Views.ProductionManagement
                 return;
             }
 
-            // 3. 检查检测类别
-            string selectedClass = cmb_DetectionClass.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedClass))
+            // 3. 读两个 ComboBox 的值
+            string okClass = cmb_DetectionClass.SelectedItem?.ToString() ?? "";
+            string ngClass = cmb_DetectionClass_NG.SelectedItem?.ToString() ?? "";
+
+            if (string.IsNullOrEmpty(okClass) && string.IsNullOrEmpty(ngClass))
             {
                 MessageBox.Show("Please select a detection class.", "Notice");
                 return;
@@ -515,8 +520,8 @@ namespace MES_WPF.Views.ProductionManagement
 
             // 6. 读取条码
             string barcode = Txt_Barcode.Text?.Trim() ?? "";
-            if (string.IsNullOrEmpty(barcode)) {
-                // barcode = "NOBARCODE";
+            if (string.IsNullOrEmpty(barcode))
+            {
                 AddLog("NG", "Barcode can not input empty!");
                 return;
             }
@@ -546,9 +551,9 @@ namespace MES_WPF.Views.ProductionManagement
                 }
                 OrigPathText.Text = "Orig Path: " + origSavePath;
 
-                // 9. 用相机帧做 YOLO 检测
+                // 9. 用相机帧做 YOLO 检测（传 null，返回所有类别）
                 DetectionResult detResult = await Task.Run(() =>
-                    _detector.Detect(origSavePath, resultPath, selectedClass, confThreshold));
+                    _detector.Detect(origSavePath, resultPath, null, confThreshold));
 
                 // 10. 显示结果图
                 var bitmap = new BitmapImage();
@@ -565,10 +570,12 @@ namespace MES_WPF.Views.ProductionManagement
                 _currentResultPath = resultPath;
                 ResultPathText.Text = "Result Path: " + resultPath;
 
-                // 11. 判断 OK / NG
-                bool found = detResult.ValidDetections.Count > 0;
+                // 11. 判定 OK / NG
+                bool finalOK;
+                string reason;
+                JudgeResult(detResult, okClass, ngClass, out finalOK, out reason);
 
-                AddDetectionLog(found, detResult, selectedClass);
+                AddDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
             }
             catch (Exception ex)
             {
@@ -581,13 +588,44 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
-        // ==================== 日志 ====================
-
-        // ==================== 日志 ====================
-
         /// <summary>
-        /// 添加一条操作日志（通用）
+        /// 统一判定 OK / NG：
+        /// - 检测到 NG 类 → NG
+        /// - 检测到 OK 类且无 NG → OK
+        /// - 都没检测到 → NG
         /// </summary>
+        private void JudgeResult(DetectionResult detResult, string okClass, string ngClass,
+                                 out bool finalOK, out string reason)
+        {
+            var detectedClasses = detResult.ValidDetections
+                .Select(d => d.ClassName)
+                .ToList();
+
+            bool hasNG = !string.IsNullOrEmpty(ngClass) &&
+                         detectedClasses.Any(c => c.Equals(ngClass, StringComparison.OrdinalIgnoreCase));
+
+            bool hasOK = !string.IsNullOrEmpty(okClass) &&
+                         detectedClasses.Any(c => c.Equals(okClass, StringComparison.OrdinalIgnoreCase));
+
+            if (hasNG)
+            {
+                finalOK = false;
+                reason = $"Detected NG class: {ngClass}";
+            }
+            else if (hasOK)
+            {
+                finalOK = true;
+                reason = $"Detected OK class: {okClass}";
+            }
+            else
+            {
+                finalOK = false;
+                reason = "Neither OK nor NG class detected";
+            }
+        }
+
+        // ==================== 日志 ====================
+
         private void AddLog(string status, string detail)
         {
             string time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -608,13 +646,15 @@ namespace MES_WPF.Views.ProductionManagement
         }
 
         /// <summary>
-        /// 添加一条检测日志（包含检测信息）
+        /// 添加一条检测日志
         /// </summary>
-        private void AddDetectionLog(bool found, DetectionResult detResult, string selectedClass)
+        private void AddDetectionLog(bool found, DetectionResult detResult,
+                             string selectedClass, string customReason = null)
         {
             string status = found ? "OK" : "NG";
             string detail;
 
+            // 先算出详细信息
             int imgW = 0, imgH = 0;
             if (File.Exists(_currentPhotoPath))
             {
@@ -623,14 +663,15 @@ namespace MES_WPF.Views.ProductionManagement
                 imgH = mat.Height;
             }
 
-            if (found)
+            string baseInfo;
+            if (found && detResult.ValidDetections.Count > 0)
             {
                 var best = detResult.ValidDetections.OrderByDescending(d => d.Confidence).First();
                 int cx = best.X + best.Width / 2;
                 int cy = best.Y + best.Height / 2;
 
-                detail = $"Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
-                         $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
+                baseInfo = $"Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
+                           $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
             }
             else if (detResult.LowConfDetections.Count > 0)
             {
@@ -638,12 +679,22 @@ namespace MES_WPF.Views.ProductionManagement
                 int cx = best.X + best.Width / 2;
                 int cy = best.Y + best.Height / 2;
 
-                detail = $"[Confidence below threshold] Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
-                         $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
+                baseInfo = $"[Confidence below threshold] Class: {best.ClassName}, Conf: {best.Confidence:F2}, " +
+                           $"ImgSize: {imgW}x{imgH}, Center: ({cx},{cy})";
             }
             else
             {
-                detail = "Not detected: target not found";
+                baseInfo = "Not detected: target not found";
+            }
+
+            // 拼接自定义 reason 和详细信息
+            if (!string.IsNullOrEmpty(customReason))
+            {
+                detail = $"{customReason} | {baseInfo}";
+            }
+            else
+            {
+                detail = baseInfo;
             }
 
             AddLog(status, detail);

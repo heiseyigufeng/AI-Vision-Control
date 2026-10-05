@@ -348,16 +348,16 @@
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
                 <ComboBox x:Name="cmb_DetectionClass_NG"
-          Width="180"
-          Height="24"
-          Margin="6,0,6,0"
-          Background="#0F2438"
-          Foreground="White"
-          BorderBrush="#2196F3"
-          BorderThickness="1"
-          FontSize="12"
-          VerticalAlignment="Center"
-          SelectedIndex="0">
+                      Width="180"
+                      Height="24"
+                      Margin="6,0,6,0"
+                      Background="#0F2438"
+                      Foreground="White"
+                      BorderBrush="#2196F3"
+                      BorderThickness="1"
+                      FontSize="12"
+                      VerticalAlignment="Center"
+                      SelectedIndex="0">
                     <ComboBox.ItemContainerStyle>
                         <Style TargetType="ComboBoxItem">
                             <Setter Property="Foreground"
@@ -573,7 +573,7 @@
                       Background="#0F2438"
                       Foreground="White"
                       RowHeight="26"
-                      FontSize="8"
+                      FontSize="12"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False">
                 <DataGrid.Resources>
@@ -593,6 +593,26 @@
                         <Setter Property="BorderThickness"
                                 Value="0,0,1,1" />
                     </Style>
+                    <!-- 新增：单元格样式，统一修复所有列的裁剪问题 -->
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="4,2" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}"
+                            BorderThickness="0">
+                                        <ContentPresenter VerticalAlignment="Center"
+                                          HorizontalAlignment="Left" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
                 </DataGrid.Resources>
 
                 <DataGrid.Columns>
@@ -609,24 +629,16 @@
 
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
-                        <Setter Property="Background"
-                                Value="#0F2438" />
-                        <Setter Property="Foreground"
-                                Value="White" />
+                        <Setter Property="Background" Value="#0F2438" />
+                        <Setter Property="Foreground" Value="White" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Status}"
-                                         Value="OK">
-                                <Setter Property="Background"
-                                        Value="#0F2F1A" />
-                                <Setter Property="Foreground"
-                                        Value="#4CAF50" />
+                            <DataTrigger Binding="{Binding Status}" Value="OK">
+                                <Setter Property="Background" Value="#1B5E20" />
+                                <Setter Property="Foreground" Value="#A5D6A7" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding Status}"
-                                         Value="NG">
-                                <Setter Property="Background"
-                                        Value="#2F1A1A" />
-                                <Setter Property="Foreground"
-                                        Value="#F44336" />
+                            <DataTrigger Binding="{Binding Status}" Value="NG">
+                                <Setter Property="Background" Value="#B71C1C" />
+                                <Setter Property="Foreground" Value="#FFCDD2" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

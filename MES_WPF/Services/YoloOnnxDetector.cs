@@ -64,29 +64,40 @@ namespace MES_WPF.Services
             // 拿到所有框（最低 0.05 过滤，避免 NMS 处理太多）
             var allDetections = PostprocessAll(output, origW, origH);
 
-            // 只保留指定类别
-            if (!string.IsNullOrEmpty(filterClassName))
-            {
+           
+                // 4. 只保留指定类别（如果传了 filterClassName）
+                if (!string.IsNullOrEmpty(filterClassName))
+                {
                 allDetections = allDetections
-                    .Where(d => string.Equals(d.ClassName, filterClassName, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
+                        .Where(d => string.Equals(d.ClassName, filterClassName, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    for (int i = 0; i < allDetections.Count; i++)
+                    allDetections[i].Index = i + 1;
+                }
+          
 
             // 分两类：>= 阈值（有效） 和 < 阈值（低置信度）
             var validDetections = allDetections.Where(d => d.Confidence >= confThreshold).ToList();
             var lowConfDetections = allDetections.Where(d => d.Confidence < confThreshold).ToList();
 
+
+            // 动态计算线宽和字体大小（按原图短边比例）
+            int baseSize = Math.Max(src.Width, src.Height);
+            int thickness = Math.Max(2, baseSize / 400);            // 线宽
+            double fontScale = Math.Max(0.6, baseSize / 1500.0);    // 字体大小
+            int textThickness = Math.Max(1, thickness / 2);         // 文字线宽
+
             // 画低置信度的框（红）
             foreach (var det in lowConfDetections)
             {
                 var rect = new Rect(det.X, det.Y, det.Width, det.Height);
-                Cv2.Rectangle(src, rect, new Scalar(0, 0, 255), 2);
+                Cv2.Rectangle(src, rect, new Scalar(0, 0, 255), thickness);
 
                 string label = $"{det.ClassName} {det.Confidence:F2} (< threshold)";
                 Cv2.PutText(src, label, new Point(det.X, det.Y - 5),
-                    HersheyFonts.HersheySimplex, 0.5, new Scalar(0, 0, 255), 2);
+                    HersheyFonts.HersheySimplex, fontScale, new Scalar(0, 0, 255), textThickness);
             }
-
             // 画有效框（绿），并重新编号
             for (int i = 0; i < validDetections.Count; i++)
             {
@@ -94,11 +105,11 @@ namespace MES_WPF.Services
                 det.Index = i + 1;
 
                 var rect = new Rect(det.X, det.Y, det.Width, det.Height);
-                Cv2.Rectangle(src, rect, new Scalar(0, 255, 0), 2);
+                Cv2.Rectangle(src, rect, new Scalar(0, 255, 0), thickness);
 
                 string label = $"[{det.Index}] {det.ClassName} {det.Confidence:F2}";
                 Cv2.PutText(src, label, new Point(det.X, det.Y - 5),
-                    HersheyFonts.HersheySimplex, 0.6, new Scalar(0, 255, 0), 2);
+                    HersheyFonts.HersheySimplex, fontScale, new Scalar(0, 255, 0), textThickness);
             }
 
             Cv2.ImWrite(outputPath, src);

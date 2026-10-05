@@ -129,28 +129,28 @@ namespace MES_WPF.Views.ProductionManagement
 
         // ==================== 相机控制 ====================
 
+        
         private void Btn_OpenCamera_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                _isScreenMode = false;
-
                 if (_cameraService.IsOpened)
                 {
-                    AddLog("OK", "Camera already opened.");
                     StartPreview();
+                    AddLog("OK", "Camera already opened.");
                     return;
                 }
 
                 bool ok = _cameraService.Open();
                 if (!ok)
                 {
-                    AddLog("NG", "Failed to open camera: no camera found.");
+                    // 显示具体原因
+                    AddLog("NG", $"Failed to open camera: {_cameraService.LastError}");
                     return;
                 }
 
                 StartPreview();
-                AddLog("OK", $"Camera opened. Type: {_cameraService.CurrentType}");
+                AddLog("OK", "Camera opened.");
             }
             catch (Exception ex)
             {

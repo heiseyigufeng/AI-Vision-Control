@@ -15,6 +15,9 @@ namespace MES_WPF.Services
         public CameraType CurrentType { get; private set; } = CameraType.None;
         public bool IsOpened => CurrentType != CameraType.None;
 
+        // 最后一次失败原因
+        public string LastError { get; private set; } = "";
+
         private DahengCamera _dahengCamera;
         private VideoCapture _laptopCapture;
 
@@ -23,6 +26,8 @@ namespace MES_WPF.Services
         /// </summary>
         public bool Open()
         {
+            LastError = "";
+
             // 1. 先试大恒
             try
             {
@@ -32,10 +37,16 @@ namespace MES_WPF.Services
                     CurrentType = CameraType.Daheng;
                     return true;
                 }
-                _dahengCamera = null;
+                else
+                {
+                    // 大恒打开失败，记录原因
+                    LastError = $"Daheng: {_dahengCamera.LastError}";
+                    _dahengCamera = null;
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                LastError = $"Daheng exception: {ex.Message}";
                 _dahengCamera = null;
             }
 
@@ -52,9 +63,15 @@ namespace MES_WPF.Services
                 }
                 _laptopCapture?.Dispose();
                 _laptopCapture = null;
+
+                if (string.IsNullOrEmpty(LastError))
+                    LastError = "Laptop camera not found";
+                else
+                    LastError += " | Laptop camera not found";
             }
-            catch
+            catch (Exception ex)
             {
+                LastError += $" | Laptop exception: {ex.Message}";
                 _laptopCapture = null;
             }
 
