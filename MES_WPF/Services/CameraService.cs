@@ -3,78 +3,91 @@ using System;
 
 namespace MES_WPF.Services
 {
-    /// <summary>
-    /// 相机类型
-    /// </summary>
     public enum CameraType
     {
         None,
+        Daheng,
         LaptopCam
     }
 
-    /// <summary>
-    /// 相机服务：当前用笔记本自带摄像头（OpenCV VideoCapture）
-    /// </summary>
     public class CameraService : IDisposable
     {
         public CameraType CurrentType { get; private set; } = CameraType.None;
         public bool IsOpened => CurrentType != CameraType.None;
 
-        private VideoCapture _capture;
+        private DahengCamera _dahengCamera;
+        private VideoCapture _laptopCapture;
 
         /// <summary>
-        /// 打开相机
+        /// 打开相机：优先大恒，失败再用笔记本
         /// </summary>
-        /// <param name="cameraIndex">摄像头索引（0 是默认摄像头）</param>
-        /// <returns>是否成功</returns>
-        public bool Open(int cameraIndex = 0)
+        public bool Open()
         {
+            // 1. 先试大恒
             try
             {
-                // 先关闭已打开的
-                Close();
-
-                _capture = new VideoCapture(cameraIndex);
-                if (!_capture.IsOpened())
+                _dahengCamera = new DahengCamera();
+                if (_dahengCamera.Open())
                 {
-                    _capture?.Dispose();
-                    _capture = null;
-                    CurrentType = CameraType.None;
-                    return false;
+                    CurrentType = CameraType.Daheng;
+                    return true;
                 }
-
-                // 设置分辨率
-                _capture.Set(VideoCaptureProperties.FrameWidth, 1280);
-                _capture.Set(VideoCaptureProperties.FrameHeight, 720);
-
-                CurrentType = CameraType.LaptopCam;
-                return true;
+                _dahengCamera = null;
             }
             catch
             {
-                CurrentType = CameraType.None;
-                return false;
+                _dahengCamera = null;
             }
+
+            // 2. 再试笔记本摄像头
+            try
+            {
+                _laptopCapture = new VideoCapture(0);
+                if (_laptopCapture.IsOpened())
+                {
+                    _laptopCapture.Set(VideoCaptureProperties.FrameWidth, 1280);
+                    _laptopCapture.Set(VideoCaptureProperties.FrameHeight, 720);
+                    CurrentType = CameraType.LaptopCam;
+                    return true;
+                }
+                _laptopCapture?.Dispose();
+                _laptopCapture = null;
+            }
+            catch
+            {
+                _laptopCapture = null;
+            }
+
+            // 3. 都没找到
+            CurrentType = CameraType.None;
+            return false;
         }
 
         /// <summary>
-        /// 抓一帧，返回 Mat（BGR）。失败返回 null
+        /// 抓一帧，返回 Mat（BGR）
         /// </summary>
         public Mat GrabFrame()
         {
             try
             {
-                if (_capture == null || !_capture.IsOpened())
-                    return null;
-
-                var frame = new Mat();
-                if (!_capture.Read(frame) || frame.Empty())
+                switch (CurrentType)
                 {
-                    frame.Dispose();
-                    return null;
-                }
+                    case CameraType.Daheng:
+                        return _dahengCamera?.GrabFrame();
 
-                return frame;
+                    case CameraType.LaptopCam:
+                        if (_laptopCapture == null || !_laptopCapture.IsOpened()) return null;
+                        var frame = new Mat();
+                        if (!_laptopCapture.Read(frame) || frame.Empty())
+                        {
+                            frame.Dispose();
+                            return null;
+                        }
+                        return frame;
+
+                    default:
+                        return null;
+                }
             }
             catch
             {
@@ -82,28 +95,26 @@ namespace MES_WPF.Services
             }
         }
 
-        /// <summary>
-        /// 关闭相机
-        /// </summary>
         public void Close()
         {
             try
             {
-                if (_capture != null)
-                {
-                    _capture.Release();
-                    _capture.Dispose();
-                    _capture = null;
-                }
+                _dahengCamera?.Close();
+                _dahengCamera = null;
+            }
+            catch { }
+
+            try
+            {
+                _laptopCapture?.Release();
+                _laptopCapture?.Dispose();
+                _laptopCapture = null;
             }
             catch { }
 
             CurrentType = CameraType.None;
         }
 
-        public void Dispose()
-        {
-            Close();
-        }
+        public void Dispose() => Close();
     }
 }

@@ -25,7 +25,19 @@
     </Content>
     <Content Include="Resources\AIT.ico" />
   </ItemGroup>
+  <!-- ========== 大恒相机 dll 引用 ========== -->
+  <ItemGroup>
+    <Reference Include="GxIAPINET">
+      <HintPath>Libs\Daheng\GxIAPINET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Libs\Daheng\GxIAPINET.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <!-- ====================================== -->
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />

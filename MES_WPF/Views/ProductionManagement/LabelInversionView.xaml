@@ -347,7 +347,55 @@
                         </Style>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-
+                <ComboBox x:Name="cmb_DetectionClass_NG"
+          Width="180"
+          Height="24"
+          Margin="6,0,6,0"
+          Background="#0F2438"
+          Foreground="White"
+          BorderBrush="#2196F3"
+          BorderThickness="1"
+          FontSize="12"
+          VerticalAlignment="Center"
+          SelectedIndex="0">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="Foreground"
+                    Value="White" />
+                            <Setter Property="Background"
+                    Value="#0F2438" />
+                            <Setter Property="Padding"
+                    Value="6,4" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ComboBoxItem">
+                                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                                            <ContentPresenter HorizontalAlignment="Left"
+                                              VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                                <Setter TargetName="Bd"
+                                        Property="Background"
+                                        Value="#1E4B7A" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected"
+                                     Value="True">
+                                                <Setter TargetName="Bd"
+                                        Property="Background"
+                                        Value="#1565A8" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
                 <Button Content="Manual_OK"
                         Width="100"
                         Height="28"
