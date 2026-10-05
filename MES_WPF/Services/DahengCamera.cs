@@ -133,7 +133,7 @@ namespace MES_WPF.Services
 
                 // 格式转换 BGR8
                 ulong dstSize = _formatConvert.GetBufferSizeForConversion(frameData);
-                _formatConvert.Convert(frameData, _outBuffer, dstSize, false);
+                _formatConvert.Convert(frameData, _outBuffer, dstSize, true);
 
                 // 拷贝到 byte[]
                 int stride = _width * 3;
@@ -154,6 +154,10 @@ namespace MES_WPF.Services
                 // byte[] → Mat
                 var mat = new Mat(_height, _width, MatType.CV_8UC3);
                 Marshal.Copy(flipped, 0, mat.Data, flipped.Length);
+
+                // ========== 水平翻转（修正左右颠倒） ==========
+                Cv2.Flip(mat, mat, FlipMode.Y);
+                // ============================================
 
                 lock (_lock)
                 {
