@@ -15,13 +15,15 @@
     <None Remove="Assets\family.onnx" />
     <None Remove="Assets\family.yaml" />
     <None Remove="Assets\First.png" />
+    <None Remove="Assets\MouseOff_LightDetect.onnx" />
+    <None Remove="Assets\MouseOff_LightDetect.yaml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\family.onnx">
+    <Content Include="Assets\MouseOff_LightDetect.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Assets\family.yaml">
+    <Content Include="Assets\MouseOff_LightDetect.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\AIT.ico" />
