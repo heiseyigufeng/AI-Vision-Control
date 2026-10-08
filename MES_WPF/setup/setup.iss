@@ -23,11 +23,19 @@ PrivilegesRequired=admin
 SetupIconFile=..\Resources\AIT.ico
 
 [Files]
+; 主程序文件
 Source: "..\publish\*"; DestDir: "{app}"; Flags: recursesubdirs
+
+; VC++ 运行库（释放到临时目录，安装后自动删除）
+Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
 
 [Run]
+; 先安装 VC++ 运行库
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "正在安装 Microsoft Visual C++ 运行库..."; Flags: waituntilterminated
+
+; 再启动主程序
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
