@@ -1,0 +1,8 @@
+path: D:/F12_Detect/MouseOff_LightDetect/datasets/Alice
+train: images/train
+val: images/val
+test:
+
+names:
+  0: MouseOff_light_OK
+  1: MouseOff_light_NGcls
