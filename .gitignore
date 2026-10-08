@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /MES_WPF/setup/Output/F12_AI_Vision_Setup_1.0.0.zip
 /MES_WPF/setup/Output
+/MES_WPF/publish.7z
+/.gitignore
+/publish.7z
