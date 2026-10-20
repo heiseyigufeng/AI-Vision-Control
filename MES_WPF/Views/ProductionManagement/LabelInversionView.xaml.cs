@@ -1,14 +1,17 @@
-﻿using System;
+﻿using MES_WPF.Services;
+using OpenCvSharp;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using OpenCvSharp;
-using MES_WPF.Services;
+using System.Threading;
 
 namespace MES_WPF.Views.ProductionManagement
 {
@@ -28,6 +31,8 @@ namespace MES_WPF.Views.ProductionManagement
         private static readonly string ResultImageDir = Path.Combine(BaseDir, "ResultImage");
         private static readonly string LogDir = Path.Combine(BaseDir, "logs");
 
+        // =====获取工单和路由信息和站别信息；
+
         // ========== YOLO ==========
         private string _modelPath = "";
         private string _yamlPath = "";
@@ -41,7 +46,18 @@ namespace MES_WPF.Views.ProductionManagement
         // ========== 操作日志 ==========
         public ObservableCollection<LogItem> OperationLogs { get; } = new ObservableCollection<LogItem>();
 
+
+
+
+        // ===================MES Data =======================
+
+        string workOrder = "";
+        string model_no = "";
+        string line_code = ""; 
+        string route_no = "";
+
         // ==================== 构造函数 ====================
+
 
         public LabelInversionView(CameraService cameraService)
         {
@@ -481,6 +497,17 @@ namespace MES_WPF.Views.ProductionManagement
 
         private async void Btn_Detect_Click(object sender, RoutedEventArgs e)
         {
+            // ====== 修改这里：判断 CheckBox 是否被勾选 ======
+            if (Connect_SFC.IsChecked == true)
+            {
+                // 如果勾选了，执行 MES 数据库检查及延时
+                if (!checkWorkOrderInfo())
+                {
+                    return;
+                }
+            }
+
+
             // 1. 检查相机是否打开
             if (!_cameraService.IsOpened)
             {
@@ -586,6 +613,47 @@ namespace MES_WPF.Views.ProductionManagement
             {
                 Btn_Detect.IsEnabled = true;
             }
+        }
+
+        private bool checkWorkOrderInfo()
+        {
+            bool check_result = false;
+            // read the work order 
+            string keyin_barcode = Txt_WorkOrder.Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(keyin_barcode))
+            {
+                AddLog("NG", "workorder can not input empty!");
+                return check_result;
+            }
+            string keyin_station = ctxt_stations.Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(keyin_station))
+            {
+                AddLog("NG", "station can not input empty!");
+                return check_result;
+            }
+
+
+            // 1. 从文本框读取等待时间（比如 3.0）
+            if (double.TryParse(txt_delayTime.Text.Trim(), out double delaySeconds))
+            {
+                // 2. 将秒转为毫秒
+                int delayMs = (int)(delaySeconds * 1000);
+
+                // 3. 强制程序在这里死等（UI会卡住）
+                Thread.Sleep(delayMs);
+
+                // 4. 时间到了，现场也准备好了，继续往下执行
+            }
+            else
+            {
+                AddLog("NG", "Invalid delay time,Please enter a number!");
+                return check_result;
+            }
+
+            check_result = true;
+            return check_result;
+
+
         }
 
         /// <summary>
@@ -761,5 +829,62 @@ namespace MES_WPF.Views.ProductionManagement
                 return null;
             }
         }
+
+
+        private void Txt_WorkOrder_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+
+                workOrder = Txt_WorkOrder.Text.Trim();
+
+                if (string.IsNullOrEmpty(workOrder))
+                {
+                    AddLog("NG", "work order can not input empty!");
+                    return;
+                }
+
+                try
+                {
+                    var mesService = new MesDataService();
+                    var info = mesService.GetWoInfo(workOrder);
+
+                    if (info != null)
+                    {
+                        //更新界面的文本(请替换为你界面上实际控件的 x: Name)
+                        txt_model.Text = info.Model;
+                        txt_routeNO.Text = info.RouteNo;
+                        txt_lineCode.Text = info.LineCode;
+
+                        model_no = info.Model;
+                        route_no = info.RouteNo;
+                        line_code = info.LineCode;
+
+                        // 将站点列表绑定到 ComboBox
+                        ctxt_stations.ItemsSource = null;
+                        ctxt_stations.ItemsSource = info.ProcessList;
+
+                        // 如果列表不为空，默认选中第一项
+                        if (info.ProcessList.Count > 0)
+                        {
+                            ctxt_stations.SelectedIndex = 0;
+                        }
+
+
+                    }
+                    else
+                    {
+                        AddLog("NG", "No information found for this Work Order. Please check the ID.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddLog("NG", $"An error occurred: {ex.Message}");
+                }
+            }
+        }
+
+
     }
 }

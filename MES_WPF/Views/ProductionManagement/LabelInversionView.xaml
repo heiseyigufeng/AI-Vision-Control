@@ -35,6 +35,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0"
@@ -43,7 +44,9 @@
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <TextBox Text="9910300K6247"
+                        <TextBox 
+                            x:Name="Txt_WorkOrder"
+                            Text=""
                                  Foreground="White"
                                  Background="#0F2438"
                                  BorderBrush="#2196F3"
@@ -53,7 +56,8 @@
                                  Height="24"
                                  Margin="6,0,0,0"
                                  VerticalAlignment="Center"
-                                 Padding="4,0" />
+                                 Padding="4,0" 
+                                 KeyDown="Txt_WorkOrder_KeyDown"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1"
@@ -63,7 +67,10 @@
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <TextBlock Text="20-CP101RS07"
+                        <TextBlock 
+                            x:Name="txt_model"
+                            Text=""
+                            MinWidth="100"
                                    Foreground="White"
                                    FontSize="12"
                                    Margin="6,0,0,0"
@@ -73,11 +80,14 @@
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"
                                 Margin="12,0,0,0">
-                        <TextBlock Text="Model:"
+                        <TextBlock Text="Route:"
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <TextBlock Text="20-CP101RS07_Rework"
+                        <TextBlock 
+                            x:Name="txt_routeNO"
+                            Text=""
+                            MinWidth="145"
                                    Foreground="White"
                                    FontSize="12"
                                    Margin="6,0,0,0"
@@ -91,7 +101,10 @@
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <TextBlock Text="A16"
+                        <TextBlock 
+                            x:Name="txt_lineCode"
+                            Text=""
+                            MinWidth="20"
                                    Foreground="White"
                                    FontSize="12"
                                    Margin="6,0,0,0"
@@ -105,7 +118,9 @@
                                    Foreground="#8FA3BF"
                                    FontSize="12"
                                    VerticalAlignment="Center" />
-                        <ComboBox Width="120"
+                        <ComboBox 
+                            x:Name="ctxt_stations"
+                            MinWidth="100"
                                   Height="24"
                                   Margin="6,0,0,0"
                                   Background="#0F2438"
@@ -151,10 +166,7 @@
                                         </Setter.Value>
                                     </Setter>
                                 </Style>
-                            </ComboBox.ItemContainerStyle>
-                            <ComboBoxItem Content="INPUT" />
-                            <ComboBoxItem Content="OBD_LabelCheck" />
-                            <ComboBoxItem Content="Peel-off" />
+                            </ComboBox.ItemContainerStyle>                           
                         </ComboBox>
                     </StackPanel>
 
@@ -177,6 +189,16 @@
                                  Margin="6,0,0,0"
                                  VerticalAlignment="Center"
                                  Padding="4,0" />
+                    </StackPanel>
+                    <!-- 第6列：新增 SFC CheckBox -->
+                    <StackPanel Grid.Column="6"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0">
+                        <CheckBox x:Name="Connect_SFC"
+                                  Content="Conn-SFC"
+                                  Foreground="White"
+                                  FontSize="12"
+                                  VerticalAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
@@ -286,7 +308,9 @@
                            Foreground="White"
                            FontSize="14"
                            VerticalAlignment="Center" />
-                <TextBox Text="1.0"
+                <TextBox 
+                    x:Name="txt_delayTime"
+                    Text="1.0"
                          Width="100"
                          Height="24"
                          Margin="6,0,0,0"
