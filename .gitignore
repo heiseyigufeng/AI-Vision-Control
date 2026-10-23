@@ -366,3 +366,6 @@ FodyWeavers.xsd
 /MES_WPF/publish.7z
 /.gitignore
 /publish.7z
+/MES_WPF/Assets/family.onnx
+/MES_WPF/Assets/family.yaml
+/需求文档.md
