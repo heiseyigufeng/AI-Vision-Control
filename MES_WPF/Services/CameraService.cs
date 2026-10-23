@@ -100,6 +100,7 @@ namespace MES_WPF.Services
                             frame.Dispose();
                             return null;
                         }
+                        Cv2.Flip(frame, frame, FlipMode.Y);
                         return frame;
 
                     default:

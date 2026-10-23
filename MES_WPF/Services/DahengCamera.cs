@@ -229,7 +229,7 @@ namespace MES_WPF.Services
 
                 // 格式转换 BGR8（true = 上下翻转）
                 ulong dstSize = _formatConvert.GetBufferSizeForConversion(frameData);
-                _formatConvert.Convert(frameData, _outBuffer, dstSize, false);
+                _formatConvert.Convert(frameData, _outBuffer, dstSize, true);
 
                 // 拷贝到 byte[]
                 int stride = _width * 3;
