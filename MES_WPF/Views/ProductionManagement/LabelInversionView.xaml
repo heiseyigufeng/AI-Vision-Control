@@ -36,6 +36,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0"
@@ -166,7 +167,7 @@
                                         </Setter.Value>
                                     </Setter>
                                 </Style>
-                            </ComboBox.ItemContainerStyle>                           
+                            </ComboBox.ItemContainerStyle>
                         </ComboBox>
                     </StackPanel>
 
@@ -200,6 +201,16 @@
                                   FontSize="12"
                                   VerticalAlignment="Center" />
                     </StackPanel>
+                    <!-- 第7列：subbarcode check -->
+                    <StackPanel Grid.Column="7"
+            Orientation="Horizontal"
+            Margin="12,0,0,0">
+                        <CheckBox x:Name="subConvertMain"
+              Content="sub_Convert_Main"
+              Foreground="White"
+              FontSize="12"
+              VerticalAlignment="Center" />
+                    </StackPanel>
                 </Grid>
             </ScrollViewer>
         </Border>
@@ -208,9 +219,12 @@
         <Grid Grid.Row="1"
               Margin="0,0,0,4">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="8*" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="69*" />
+                <ColumnDefinition Width="398*" />
+                <ColumnDefinition Width="50*"/>
+                <ColumnDefinition Width="15*"/>
+                <ColumnDefinition Width="91*"/>
+                <ColumnDefinition Width="69*" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0"
@@ -235,14 +249,13 @@
                      BorderThickness="1"
                      FontSize="16"
                      Height="46"
-                     Margin="6,0"
+                     Margin="6,0,6,0"
                      VerticalContentAlignment="Center"
                      Padding="8,0"
-                     KeyDown="Txt_Barcode_KeyDown" />
+                     KeyDown="Txt_Barcode_KeyDown" Grid.ColumnSpan="4" />
 
-            <Button Grid.Column="2"
+            <Button Grid.Column="5"
                     x:Name="Btn_Detect"
-                    Height="46"
                     Background="#0F2F1A"
                     BorderBrush="#4CAF50"
                     BorderThickness="2"
@@ -251,7 +264,7 @@
                     FontWeight="Bold"
                     Cursor="Hand"
                     Content="OK"
-                    Click="Btn_Detect_Click" />
+                    Click="Btn_Detect_Click" Margin="0,7,0,7" />
         </Grid>
 
         <!-- ===== 第2行：标题栏 + 相机控制 ===== -->

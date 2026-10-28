@@ -1,8 +1,12 @@
-﻿using MES_WPF.Services;
+﻿using MES_WPF.Model.BasicInformation;
+using MES_WPF.Services;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using OpenCvSharp;
+using SFCDLL_Common.smtService;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -11,7 +15,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using System.Threading;
+using System.Windows.Shapes;
 
 namespace MES_WPF.Views.ProductionManagement
 {
@@ -26,10 +30,10 @@ namespace MES_WPF.Views.ProductionManagement
         private string _currentSavedOrigPath = "";
 
         private static readonly string BaseDir = AppDomain.CurrentDomain.BaseDirectory;
-        private static readonly string AssetsDir = Path.Combine(BaseDir, "Assets");
-        private static readonly string OrigImageDir = Path.Combine(BaseDir, "OrigImage");
-        private static readonly string ResultImageDir = Path.Combine(BaseDir, "ResultImage");
-        private static readonly string LogDir = Path.Combine(BaseDir, "logs");
+        private static readonly string AssetsDir = System.IO.Path.Combine(BaseDir, "Assets");
+        private static readonly string OrigImageDir = System.IO.Path.Combine(BaseDir, "OrigImage");
+        private static readonly string ResultImageDir = System.IO.Path.Combine(BaseDir, "ResultImage");
+        private static readonly string LogDir = System.IO.Path.Combine(BaseDir, "logs");
 
         // =====获取工单和路由信息和站别信息；
 
@@ -51,10 +55,28 @@ namespace MES_WPF.Views.ProductionManagement
 
         // ===================MES Data =======================
 
-        string workOrder = "";
         string model_no = "";
-        string line_code = ""; 
+        string workOrder = "";
+        string line_code = "";
+        string station_code = "";
+        string process_no = "";
+        string barcode = "";
+        string fisrt_Result = "";
+        string lastR_Result = "";
+        string physicalLineCode = "";
+        string subbarcode = null;
+        string result = "";
+        string is_ai = "";
+        float confThreshold = 0.66f;
         string route_no = "";
+
+        string okClass = "";
+        string ngClass = "";
+
+
+        // =================== SFC DLL Service ====================
+        SFCDLLService sFCDLLService = new SFCDLLService();
+        
 
         // ==================== 构造函数 ====================
 
@@ -225,7 +247,7 @@ namespace MES_WPF.Views.ProductionManagement
                 var classNames = ParseNamesFromYaml(_yamlPath);
                 if (classNames.Count == 0) return;
 
-                string txtPath = Path.Combine(AssetsDir, "DetectionClass.txt");
+                string txtPath = System.IO.Path.Combine(AssetsDir, "DetectionClass.txt");
                 File.WriteAllLines(txtPath, classNames);
             }
             catch (Exception ex)
@@ -315,7 +337,7 @@ namespace MES_WPF.Views.ProductionManagement
         {
             try
             {
-                string filePath = Path.Combine(AssetsDir, "DetectionClass.txt");
+                string filePath = System.IO.Path.Combine(AssetsDir, "DetectionClass.txt");
                 if (!File.Exists(filePath)) return;
 
                 var lines = File.ReadAllLines(filePath)
@@ -426,17 +448,18 @@ namespace MES_WPF.Views.ProductionManagement
             }
 
             // 读取 Confidence
-            float confThreshold = 0.25f;
             if (!float.TryParse(TxtConfidence.Text, out confThreshold))
+            { 
                 confThreshold = 0.25f;
+            }
             confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
 
             try
             {
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 
-                string resultPath = Path.Combine(ResultImageDir, $"result_Load_{timestamp}.jpg");
-                string origSavePath = Path.Combine(OrigImageDir, $"orig_Load_{timestamp}.jpg");
+                string resultPath = System.IO.Path.Combine(ResultImageDir, $"result_Load_{timestamp}.jpg");
+                string origSavePath = System.IO.Path.Combine(OrigImageDir, $"orig_Load_{timestamp}.jpg");
 
                 try
                 {
@@ -497,71 +520,110 @@ namespace MES_WPF.Views.ProductionManagement
 
         private async void Btn_Detect_Click(object sender, RoutedEventArgs e)
         {
+            if (checkCondition())
+            {
+                AI_Detect();
+            }
+        }
+
+        private  bool checkCondition()
+        {
             // ====== 修改这里：判断 CheckBox 是否被勾选 ======
             if (Connect_SFC.IsChecked == true)
             {
                 // 如果勾选了，执行 MES 数据库检查及延时
                 if (!checkWorkOrderInfo())
                 {
-                    return;
+                    return false;
                 }
             }
-
 
             // 1. 检查相机是否打开
             if (!_cameraService.IsOpened)
             {
                 AddLog("NG", "Camera not turned on!");
-                return;
+                return false; 
             }
 
             // 2. 检查 YOLO 模型
             if (_detector == null)
             {
                 MessageBox.Show("YOLO model is not loaded.", "Error");
-                return;
+                return false; 
             }
 
             // 3. 读两个 ComboBox 的值
-            string okClass = cmb_DetectionClass.SelectedItem?.ToString() ?? "";
-            string ngClass = cmb_DetectionClass_NG.SelectedItem?.ToString() ?? "";
+            okClass = cmb_DetectionClass.SelectedItem?.ToString() ?? "";
+            ngClass = cmb_DetectionClass_NG.SelectedItem?.ToString() ?? "";
 
             if (string.IsNullOrEmpty(okClass) && string.IsNullOrEmpty(ngClass))
             {
                 MessageBox.Show("Please select a detection class.", "Notice");
-                return;
+                return false;
             }
 
             // 4. 抓取相机当前帧
             if (_lastCameraFrame == null || _lastCameraFrame.Empty())
             {
                 AddLog("NG", "Camera not turned on!");
-                return;
+                return false    ;
             }
 
             // 5. 读取 Confidence
-            float confThreshold = 0.25f;
+            confThreshold = 0.25f;
             if (!float.TryParse(TxtConfidence.Text, out confThreshold))
+            {
                 confThreshold = 0.25f;
+            }
             confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
 
             // 6. 读取条码
-            string barcode = Txt_Barcode.Text?.Trim() ?? "";
+            barcode = Txt_Barcode.Text?.Trim() ?? "";
             if (string.IsNullOrEmpty(barcode))
             {
                 AddLog("NG", "Barcode can not input empty!");
-                return;
+                return false    ;
             }
-            foreach (var c in Path.GetInvalidFileNameChars())
+            foreach (var c in System.IO.Path.GetInvalidFileNameChars())
+            {
                 barcode = barcode.Replace(c, '_');
+            }
 
+            // check station info
+
+            if (subConvertMain.IsChecked == true)
+            {
+                string sfcGetMainBarcode = sFCDLLService.sfcdll.GetSpecialValue("Razer", "GET_BARCODE", barcode);
+
+                if (string.IsNullOrWhiteSpace(sfcGetMainBarcode))
+                {
+                    AddLog("NG", "Failed to retrieve main barcode!");
+                    return false;
+                }
+                subbarcode = barcode;
+                barcode = sfcGetMainBarcode;
+            }
+
+            string checkStationResult = sFCDLLService.sfcdll.CheckStationPass("Razer", station_code, barcode, line_code, "1.0");
+
+            if (checkStationResult.Trim().ToUpper() != "Y")
+            {
+                AddLog("NG", checkStationResult);
+                return false;
+            }
+
+            return true;
+        }
+
+        private async void AI_Detect()
+        {
             try
             {
                 Btn_Detect.IsEnabled = false;
 
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string resultPath = Path.Combine(ResultImageDir, $"result_{barcode}_{timestamp}.jpg");
-                string origSavePath = Path.Combine(OrigImageDir, $"orig_{barcode}_{timestamp}.jpg");
+                string resultPath = System.IO.Path.Combine(ResultImageDir, $"result_{barcode}_{timestamp}.jpg");
+                string origSavePath = System.IO.Path.Combine(OrigImageDir, $"orig_{barcode}_{timestamp}.jpg");
 
                 // 7. 保存相机帧到原图
                 Cv2.ImWrite(origSavePath, _lastCameraFrame);
@@ -602,6 +664,45 @@ namespace MES_WPF.Views.ProductionManagement
                 string reason;
                 JudgeResult(detResult, okClass, ngClass, out finalOK, out reason);
 
+                if (Connect_SFC.IsChecked == true)
+                {
+                    DataTable dt = CreateEmptyInsertDataTable();
+
+                    // 2. 你自定义所有参数赋值（替换为你实际的变量名）
+                    dt.Rows[0]["MODEL_NO"] = model_no;
+                    dt.Rows[0]["WO_NO"] = workOrder;
+                    dt.Rows[0]["LINE_CODE"] = line_code;
+                    dt.Rows[0]["STATION_CODE"] = station_code;
+                    dt.Rows[0]["PROCESS_NO"] = station_code;
+                    dt.Rows[0]["BARCODE"] = barcode.Trim();
+                    if(finalOK)
+                    {
+                        dt.Rows[0]["First_Result"] = "PASS";
+                        dt.Rows[0]["Last_Result"] = "PASS";
+                    }
+                    else
+                    {
+                        dt.Rows[0]["First_Result"] = "FAIL";
+                        dt.Rows[0]["Last_Result"] = "FAIL";
+                    }
+                    dt.Rows[0]["PhysicalLineCode"] = physicalLineCode;
+                    dt.Rows[0]["Subbarcode"] = subbarcode;
+                    dt.Rows[0]["RESULT"] = finalOK ? "PASS" : "FAIL"; // 你的判定逻辑
+                    dt.Rows[0]["IS_AI"] = "Y";
+                    dt.Rows[0]["CONFIDENCE"] = confThreshold;
+
+
+                    string insertData_Result = sFCDLLService.InsertDataToDataBase(dt);
+
+                    if (insertData_Result != "Y")
+                    {
+                        finalOK = false;
+                        reason = "Failed to insert data into database." + reason;
+                    }
+                }
+
+
+
                 AddDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
             }
             catch (Exception ex)
@@ -615,18 +716,43 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
+        public DataTable CreateEmptyInsertDataTable()
+        {
+            DataTable dt = new DataTable();
+
+            // 严格按照你需要的 13 个字段创建列
+            dt.Columns.Add("MODEL_NO", typeof(string));
+            dt.Columns.Add("WO_NO", typeof(string));
+            dt.Columns.Add("LINE_CODE", typeof(string));
+            dt.Columns.Add("STATION_CODE", typeof(string));
+            dt.Columns.Add("PROCESS_NO", typeof(string));
+            dt.Columns.Add("BARCODE", typeof(string));
+            dt.Columns.Add("First_Result", typeof(string));
+            dt.Columns.Add("Last_Result", typeof(string));
+            dt.Columns.Add("PhysicalLineCode", typeof(string));
+            dt.Columns.Add("Subbarcode", typeof(string));
+            dt.Columns.Add("RESULT", typeof(string));
+            dt.Columns.Add("IS_AI", typeof(string));
+            dt.Columns.Add("CONFIDENCE", typeof(string));
+
+            // 直接创建第一行空数据并加入
+            DataRow row = dt.NewRow();
+            dt.Rows.Add(row);
+
+            return dt;
+        }
         private bool checkWorkOrderInfo()
         {
             bool check_result = false;
             // read the work order 
-            string keyin_barcode = Txt_WorkOrder.Text?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(keyin_barcode))
+            workOrder = Txt_WorkOrder.Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(workOrder))
             {
                 AddLog("NG", "workorder can not input empty!");
                 return check_result;
             }
-            string keyin_station = ctxt_stations.Text?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(keyin_station))
+            station_code = ctxt_stations.Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(station_code))
             {
                 AddLog("NG", "station can not input empty!");
                 return check_result;
@@ -707,7 +833,7 @@ namespace MES_WPF.Views.ProductionManagement
 
             try
             {
-                string logFile = Path.Combine(LogDir, $"{DateTime.Now:yyyy-MM-dd}.log");
+                string logFile = System.IO.Path.Combine(LogDir, $"{DateTime.Now:yyyy-MM-dd}.log");
                 File.AppendAllText(logFile, $"{time}\t{status}\t{detail}{Environment.NewLine}");
             }
             catch { }
@@ -869,8 +995,11 @@ namespace MES_WPF.Views.ProductionManagement
                         if (info.ProcessList.Count > 0)
                         {
                             ctxt_stations.SelectedIndex = 0;
+                            station_code = info.ProcessList[0];
                         }
 
+                        line_code = info.LineCode;
+                        physicalLineCode=info.PhysicalLineCode;
 
                     }
                     else

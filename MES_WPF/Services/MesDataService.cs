@@ -55,7 +55,7 @@ namespace MES_WPF.Services
 
                 // 3. 查线别(LineCode)
                 string sql3 = @"
-                    SELECT TOP 1 T.LINE_CODE AS LineCode 
+                    SELECT TOP 1 T.LINE_CODE AS LineCode ,T.PhysicalLineCode
                     FROM MES_MAIN_LIST T WITH (NOLOCK) 
                     WHERE T.WO_NO = @workOrder AND T.STATION_CODE = 'INPUT'";
 
@@ -63,6 +63,7 @@ namespace MES_WPF.Services
                 if (lineInfo != null)
                 {
                     result.LineCode = lineInfo.LineCode;
+                    result.PhysicalLineCode = lineInfo.PhysicalLineCode;
                 }
 
                 return result;
