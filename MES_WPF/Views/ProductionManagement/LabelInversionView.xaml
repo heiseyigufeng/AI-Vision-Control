@@ -433,21 +433,21 @@
                         </Style>
                     </ComboBox.ItemContainerStyle>
                 </ComboBox>
-                <Button Content="Manual_OK"
+                <Button x:Name="Btn_Manual_OK" Content="Manual_OK"
                         Width="100"
                         Height="28"
                         Background="Green"
                         Foreground="White"
                         BorderThickness="0"
-                        FontSize="13" />
-                <Button Content="Manual_NG"
+                        FontSize="13" Click="Btn_Manual_OK_Click" />
+                <Button x:Name="Btn_ManualNG" Content="Manual_NG"
                         Width="100"
                         Height="28"
                         Margin="6,0,0,0"
                         Background="#B71C1C"
                         Foreground="White"
                         BorderThickness="0"
-                        FontSize="13" />
+                        FontSize="13" Click="Btn_ManualNG_Click" />
             </StackPanel>
         </Grid>
 

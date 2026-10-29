@@ -76,7 +76,7 @@ namespace MES_WPF.Views.ProductionManagement
 
         // =================== SFC DLL Service ====================
         SFCDLLService sFCDLLService = new SFCDLLService();
-        
+
 
         // ==================== 构造函数 ====================
 
@@ -449,7 +449,7 @@ namespace MES_WPF.Views.ProductionManagement
 
             // 读取 Confidence
             if (!float.TryParse(TxtConfidence.Text, out confThreshold))
-            { 
+            {
                 confThreshold = 0.25f;
             }
             confThreshold = Math.Max(0f, Math.Min(1f, confThreshold));
@@ -522,12 +522,25 @@ namespace MES_WPF.Views.ProductionManagement
         {
             if (checkCondition())
             {
-                AI_Detect();
+                AI_Detect("AI");
             }
         }
 
-        private  bool checkCondition()
+        private bool checkCondition()
         {
+            // ====== 新增：每次点击侦测，先清空界面上上一次的残留图片 ======
+            ResultImage.Source = null;
+            ResultImage.Visibility = Visibility.Collapsed;
+            ResultPlaceholder.Visibility = Visibility.Visible;
+            ResultPathText.Text = "Result Path: -";
+
+            // 如果你想连原图也一起清空，取消下面四行的注释：
+            PhotoImage.Source = null;
+            PhotoImage.Visibility = Visibility.Collapsed;
+            PhotoPlaceholder.Visibility = Visibility.Visible;
+            OrigPathText.Text = "Orig Path: -";
+            // =============================================================
+
             // ====== 修改这里：判断 CheckBox 是否被勾选 ======
             if (Connect_SFC.IsChecked == true)
             {
@@ -542,14 +555,15 @@ namespace MES_WPF.Views.ProductionManagement
             if (!_cameraService.IsOpened)
             {
                 AddLog("NG", "Camera not turned on!");
-                return false; 
+                return false;
             }
 
             // 2. 检查 YOLO 模型
             if (_detector == null)
             {
-                MessageBox.Show("YOLO model is not loaded.", "Error");
-                return false; 
+                AddLog("NG", "YOLO model is not loaded.");
+          
+                return false;
             }
 
             // 3. 读两个 ComboBox 的值
@@ -558,15 +572,26 @@ namespace MES_WPF.Views.ProductionManagement
 
             if (string.IsNullOrEmpty(okClass) && string.IsNullOrEmpty(ngClass))
             {
-                MessageBox.Show("Please select a detection class.", "Notice");
+                AddLog("NG", "Please select a detection class.");
                 return false;
             }
+
+            // =========================================================
+            // 检查 OK 和 NG 类别是否选择了同一个
+            // =========================================================
+            if (!string.IsNullOrEmpty(okClass) && !string.IsNullOrEmpty(ngClass) && okClass == ngClass)
+            {
+                AddLog("NG", "The OK class and NG class cannot be the same!");
+                return false;
+            }
+
+
 
             // 4. 抓取相机当前帧
             if (_lastCameraFrame == null || _lastCameraFrame.Empty())
             {
                 AddLog("NG", "Camera not turned on!");
-                return false    ;
+                return false;
             }
 
             // 5. 读取 Confidence
@@ -582,7 +607,7 @@ namespace MES_WPF.Views.ProductionManagement
             if (string.IsNullOrEmpty(barcode))
             {
                 AddLog("NG", "Barcode can not input empty!");
-                return false    ;
+                return false;
             }
             foreach (var c in System.IO.Path.GetInvalidFileNameChars())
             {
@@ -611,41 +636,42 @@ namespace MES_WPF.Views.ProductionManagement
 
             // check station info
 
-            if (Connect_SFC.IsChecked==true) { 
-
-            if (subConvertMain.IsChecked == true)
+            if (Connect_SFC.IsChecked == true)
             {
-                string sfcGetMainBarcode = sFCDLLService.sfcdll.GetSpecialValue("Razer", "GET_BARCODE", barcode);
 
-                if (string.IsNullOrWhiteSpace(sfcGetMainBarcode))
+                if (subConvertMain.IsChecked == true)
                 {
-                    AddLog("NG", "Failed to retrieve main barcode!");
+                    string sfcGetMainBarcode = sFCDLLService.sfcdll.GetSpecialValue("Razer", "GET_BARCODE", barcode);
+
+                    if (string.IsNullOrWhiteSpace(sfcGetMainBarcode))
+                    {
+                        AddLog("NG", "Failed to retrieve main barcode!");
+                        return false;
+                    }
+                    subbarcode = barcode;
+                    barcode = sfcGetMainBarcode;
+                }
+
+                string checkStationResult = sFCDLLService.sfcdll.CheckStationPass("Razer", station_code, barcode, line_code, "1.0");
+
+                if (checkStationResult.Trim().ToUpper() != "Y")
+                {
+                    AddLog("NG", checkStationResult);
                     return false;
                 }
-                subbarcode = barcode;
-                barcode = sfcGetMainBarcode;
-            }
-
-            string checkStationResult = sFCDLLService.sfcdll.CheckStationPass("Razer", station_code, barcode, line_code, "1.0");
-
-            if (checkStationResult.Trim().ToUpper() != "Y")
-            {
-                AddLog("NG", checkStationResult);
-                return false;
-            }
             }
 
             return true;
         }
 
-        private async void AI_Detect()
+        private async void AI_Detect(string IsManual)
         {
             try
             {
                 Btn_Detect.IsEnabled = false;
 
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string resultPath = System.IO.Path.Combine(ResultImageDir, $"result_{barcode}_{timestamp}.jpg");
+                string resultPath = System.IO.Path.Combine(ResultImageDir, $"result_{IsManual}_{barcode}_{timestamp}.jpg");
                 string origSavePath = System.IO.Path.Combine(OrigImageDir, $"orig_{barcode}_{timestamp}.jpg");
 
                 // 7. 保存相机帧到原图
@@ -663,70 +689,151 @@ namespace MES_WPF.Views.ProductionManagement
                 }
                 OrigPathText.Text = "Orig Path: " + origSavePath;
 
-                // 9. 用相机帧做 YOLO 检测（传 null，返回所有类别）
-                DetectionResult detResult = await Task.Run(() =>
-                    _detector.Detect(origSavePath, resultPath, null, confThreshold));
-
-                // 10. 显示结果图
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.UriSource = new Uri(resultPath, UriKind.Absolute);
-                bitmap.EndInit();
-                bitmap.Freeze();
-
-                ResultImage.Source = bitmap;
-                ResultImage.Visibility = Visibility.Visible;
-                ResultPlaceholder.Visibility = Visibility.Collapsed;
-
-                _currentResultPath = resultPath;
-                ResultPathText.Text = "Result Path: " + resultPath;
-
-                // 11. 判定 OK / NG
+                #region 判断需要的参数
                 bool finalOK;
                 string reason;
-                JudgeResult(detResult, okClass, ngClass, out finalOK, out reason);
+                DetectionResult detResult = null;
+                #endregion
 
-                if (Connect_SFC.IsChecked == true)
+                if (IsManual == "AI")
                 {
-                    DataTable dt = CreateEmptyInsertDataTable();
 
-                    // 2. 你自定义所有参数赋值（替换为你实际的变量名）
-                    dt.Rows[0]["MODEL_NO"] = model_no;
-                    dt.Rows[0]["WO_NO"] = workOrder;
-                    dt.Rows[0]["LINE_CODE"] = line_code;
-                    dt.Rows[0]["STATION_CODE"] = station_code;
-                    dt.Rows[0]["PROCESS_NO"] = station_code;
-                    dt.Rows[0]["BARCODE"] = barcode.Trim();
-                    if(finalOK)
+                    // 9. 用相机帧做 YOLO 检测（传 null，返回所有类别）
+                    detResult = await Task.Run(() =>
+                       _detector.Detect(origSavePath, resultPath, null, confThreshold));
+
+                    // 10. 显示结果图
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.UriSource = new Uri(resultPath, UriKind.Absolute);
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+
+                    ResultImage.Source = bitmap;
+                    ResultImage.Visibility = Visibility.Visible;
+                    ResultPlaceholder.Visibility = Visibility.Collapsed;
+
+                    _currentResultPath = resultPath;
+                    ResultPathText.Text = "Result Path: " + resultPath;
+
+                    // 11. 判定 OK / NG
+
+                    JudgeResult(detResult, okClass, ngClass, out finalOK, out reason);
+
+                    if (Connect_SFC.IsChecked == true)
                     {
-                        dt.Rows[0]["First_Result"] = "PASS";
-                        dt.Rows[0]["Last_Result"] = "PASS";
+                        DataTable dt = CreateEmptyInsertDataTable();
+
+                        // 2. 你自定义所有参数赋值（替换为你实际的变量名）
+                        dt.Rows[0]["MODEL_NO"] = model_no;
+                        dt.Rows[0]["WO_NO"] = workOrder;
+                        dt.Rows[0]["LINE_CODE"] = line_code;
+                        dt.Rows[0]["STATION_CODE"] = station_code;
+                        dt.Rows[0]["PROCESS_NO"] = station_code;
+                        dt.Rows[0]["BARCODE"] = barcode.Trim();
+                        if (finalOK)
+                        {
+                            dt.Rows[0]["First_Result"] = "PASS";
+                            dt.Rows[0]["Last_Result"] = "PASS";
+                        }
+                        else
+                        {
+                            dt.Rows[0]["First_Result"] = "FAIL";
+                            dt.Rows[0]["Last_Result"] = "FAIL";
+                        }
+                        dt.Rows[0]["PhysicalLineCode"] = physicalLineCode;
+                        dt.Rows[0]["Subbarcode"] = subbarcode;
+                        dt.Rows[0]["RESULT"] = finalOK ? "PASS" : "FAIL"; // 你的判定逻辑
+                        dt.Rows[0]["IS_AI"] = IsManual;
+                        dt.Rows[0]["CONFIDENCE"] = confThreshold;
+
+
+                        string insertData_Result = sFCDLLService.InsertDataToDataBase(dt);
+
+                        if (insertData_Result != "Y")
+                        {
+                            finalOK = false;
+                            reason = "Failed to insert data into database." + reason;
+                        }
+                    }
+                    AddDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
+                }
+                else
+                {
+                    Cv2.ImWrite(resultPath, _lastCameraFrame);
+                    // ====== 新增：把人工检测保存的图片加载到界面显示 ======
+                    var bitmapManual = new BitmapImage();
+                    bitmapManual.BeginInit();
+                    bitmapManual.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapManual.UriSource = new Uri(resultPath, UriKind.Absolute);
+                    bitmapManual.EndInit();
+                    bitmapManual.Freeze();
+
+                    ResultImage.Source = bitmapManual;
+                    ResultImage.Visibility = Visibility.Visible;
+                    ResultPlaceholder.Visibility = Visibility.Collapsed;
+
+                    _currentResultPath = resultPath;
+                    ResultPathText.Text = "Result Path: " + resultPath;
+                    // ==========================================================
+
+                    if (IsManual == "Manual_OK")
+                    {
+                        finalOK = true;
+                        reason = "Manual assessment result is OK.";
                     }
                     else
                     {
-                        dt.Rows[0]["First_Result"] = "FAIL";
-                        dt.Rows[0]["Last_Result"] = "FAIL";
-                    }
-                    dt.Rows[0]["PhysicalLineCode"] = physicalLineCode;
-                    dt.Rows[0]["Subbarcode"] = subbarcode;
-                    dt.Rows[0]["RESULT"] = finalOK ? "PASS" : "FAIL"; // 你的判定逻辑
-                    dt.Rows[0]["IS_AI"] = "Y";
-                    dt.Rows[0]["CONFIDENCE"] = confThreshold;
-
-
-                    string insertData_Result = sFCDLLService.InsertDataToDataBase(dt);
-
-                    if (insertData_Result != "Y")
-                    {
                         finalOK = false;
-                        reason = "Failed to insert data into database." + reason;
+                        reason = "Manual assessment result is NG.";
                     }
+
+                    if (Connect_SFC.IsChecked == true)
+                    {
+                        DataTable dt = CreateEmptyInsertDataTable();
+
+                        // 2. 你自定义所有参数赋值（替换为你实际的变量名）
+                        dt.Rows[0]["MODEL_NO"] = model_no;
+                        dt.Rows[0]["WO_NO"] = workOrder;
+                        dt.Rows[0]["LINE_CODE"] = line_code;
+                        dt.Rows[0]["STATION_CODE"] = station_code;
+                        dt.Rows[0]["PROCESS_NO"] = station_code;
+                        dt.Rows[0]["BARCODE"] = barcode.Trim();
+                        if (finalOK)
+                        {
+                            dt.Rows[0]["First_Result"] = "PASS";
+                            dt.Rows[0]["Last_Result"] = "PASS";
+                        }
+                        else
+                        {
+                            dt.Rows[0]["First_Result"] = "FAIL";
+                            dt.Rows[0]["Last_Result"] = "FAIL";
+                        }
+                        dt.Rows[0]["PhysicalLineCode"] = physicalLineCode;
+                        dt.Rows[0]["Subbarcode"] = subbarcode;
+                        dt.Rows[0]["RESULT"] = finalOK ? "PASS" : "FAIL"; // 你的判定逻辑
+                        dt.Rows[0]["IS_AI"] = IsManual;
+                        dt.Rows[0]["CONFIDENCE"] = confThreshold;
+
+
+                        string insertData_Result = sFCDLLService.InsertDataToDataBase(dt);
+
+                        if (insertData_Result != "Y")
+                        {
+                            finalOK = false;
+                            reason = "Failed to insert data into database." + reason;
+                        }
+                    }
+
+                    AddManualDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
                 }
 
+               
 
 
-                AddDetectionLog(finalOK, detResult, $"{okClass} / {ngClass}", reason);
+
+    
             }
             catch (Exception ex)
             {
@@ -843,6 +950,26 @@ namespace MES_WPF.Views.ProductionManagement
             catch { }
         }
 
+
+
+        private void AddManualDetectionLog(bool found, DetectionResult detResult,
+                             string selectedClass, string customReason = null)
+        {
+            string status = found ? "OK" : "NG";
+            string detail;
+            string baseInfo="Manual Detection";
+            // 拼接自定义 reason 和详细信息
+            if (!string.IsNullOrEmpty(customReason))
+            {
+                detail = $"{customReason} | {baseInfo}";
+            }
+            else
+            {
+                detail = baseInfo;
+            }
+            AddLog(status, detail);
+        }
+
         /// <summary>
         /// 添加一条检测日志
         /// </summary>
@@ -862,6 +989,7 @@ namespace MES_WPF.Views.ProductionManagement
             }
 
             string baseInfo;
+            
             if (found && detResult.ValidDetections.Count > 0)
             {
                 var best = detResult.ValidDetections.OrderByDescending(d => d.Confidence).First();
@@ -1003,7 +1131,7 @@ namespace MES_WPF.Views.ProductionManagement
                         }
 
                         line_code = info.LineCode;
-                        physicalLineCode=info.PhysicalLineCode;
+                        physicalLineCode = info.PhysicalLineCode;
 
                     }
                     else
@@ -1021,7 +1149,7 @@ namespace MES_WPF.Views.ProductionManagement
         private void subConvertMain_Checked(object sender, RoutedEventArgs e)
         {
             if (Connect_SFC.IsChecked != true)
-            { 
+            {
                 subConvertMain.IsChecked = false;
                 AddLog("NG", "Please connect to SFC first.");
             }
@@ -1032,6 +1160,22 @@ namespace MES_WPF.Views.ProductionManagement
             if (Connect_SFC.IsChecked == false)
             {
                 subConvertMain.IsChecked = false;
+            }
+        }
+
+        private void Btn_ManualNG_Click(object sender, RoutedEventArgs e)
+        {
+            if (checkCondition())
+            {
+                AI_Detect("Manual_NG");
+            }
+        }
+
+        private void Btn_Manual_OK_Click(object sender, RoutedEventArgs e)
+        {
+            if (checkCondition())
+            {
+                AI_Detect("Manual_OK");
             }
         }
     }
