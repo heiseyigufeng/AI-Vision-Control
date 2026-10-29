@@ -128,7 +128,7 @@ namespace MES_WPF.ViewModels
             {
                 Title = "ProductionManagement",
                 Icon = PackIconKind.Factory,
-                ViewName = "LabelInversionView"
+                // ViewName = "LabelInversionView" 取消ViewName，因为它有子菜单项
             };
             productionItem.ExpandCommand = new RelayCommand<object>(_ => ToggleMenuExpand(productionItem));
             //productionItem.SubItems.Add(new MenuItemModel { Title = "生产计划", ViewName = "ProductionPlanView" });
@@ -136,7 +136,7 @@ namespace MES_WPF.ViewModels
             //productionItem.SubItems.Add(new MenuItemModel { Title = "生产报表", ViewName = "ProductionReportView" });
             productionItem.SubItems.Add(new MenuItemModel { Title = "ImageCaptureView", ViewName = "ImageCaptureView" });
             productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionView", ViewName = "LabelInversionView" });
-            productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionManualView", ViewName = "LabelInversionManualView" });
+           // productionItem.SubItems.Add(new MenuItemModel { Title = "LabelInversionManualView", ViewName = "LabelInversionManualView" });
             MenuItems.Add(productionItem);
 
             //// 设备管理

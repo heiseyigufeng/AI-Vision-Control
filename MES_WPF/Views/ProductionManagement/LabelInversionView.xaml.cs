@@ -589,7 +589,29 @@ namespace MES_WPF.Views.ProductionManagement
                 barcode = barcode.Replace(c, '_');
             }
 
+            // 7. 检查是否有延时
+            if (double.TryParse(txt_delayTime.Text.Trim(), out double delaySeconds))
+            {
+                // 2. 将秒转为毫秒
+                int delayMs = (int)(delaySeconds * 1000);
+
+                // 3. 强制程序在这里死等（UI会卡住）
+                Thread.Sleep(delayMs);
+
+                // 4. 时间到了，现场也准备好了，继续往下执行
+            }
+            else
+            {
+                AddLog("NG", "Invalid delay time,Please enter a number!");
+                return false;
+            }
+
+
+
+
             // check station info
+
+            if (Connect_SFC.IsChecked==true) { 
 
             if (subConvertMain.IsChecked == true)
             {
@@ -610,6 +632,7 @@ namespace MES_WPF.Views.ProductionManagement
             {
                 AddLog("NG", checkStationResult);
                 return false;
+            }
             }
 
             return true;
@@ -757,25 +780,6 @@ namespace MES_WPF.Views.ProductionManagement
                 AddLog("NG", "station can not input empty!");
                 return check_result;
             }
-
-
-            // 1. 从文本框读取等待时间（比如 3.0）
-            if (double.TryParse(txt_delayTime.Text.Trim(), out double delaySeconds))
-            {
-                // 2. 将秒转为毫秒
-                int delayMs = (int)(delaySeconds * 1000);
-
-                // 3. 强制程序在这里死等（UI会卡住）
-                Thread.Sleep(delayMs);
-
-                // 4. 时间到了，现场也准备好了，继续往下执行
-            }
-            else
-            {
-                AddLog("NG", "Invalid delay time,Please enter a number!");
-                return check_result;
-            }
-
             check_result = true;
             return check_result;
 
@@ -1014,6 +1018,21 @@ namespace MES_WPF.Views.ProductionManagement
             }
         }
 
+        private void subConvertMain_Checked(object sender, RoutedEventArgs e)
+        {
+            if (Connect_SFC.IsChecked != true)
+            { 
+                subConvertMain.IsChecked = false;
+                AddLog("NG", "Please connect to SFC first.");
+            }
+        }
 
+        private void Connect_SFC_Click(object sender, RoutedEventArgs e)
+        {
+            if (Connect_SFC.IsChecked == false)
+            {
+                subConvertMain.IsChecked = false;
+            }
+        }
     }
 }

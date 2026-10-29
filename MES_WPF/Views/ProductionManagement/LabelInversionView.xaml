@@ -199,7 +199,7 @@
                                   Content="Conn-SFC"
                                   Foreground="White"
                                   FontSize="12"
-                                  VerticalAlignment="Center" />
+                                  VerticalAlignment="Center" Click="Connect_SFC_Click" />
                     </StackPanel>
                     <!-- 第7列：subbarcode check -->
                     <StackPanel Grid.Column="7"
@@ -209,7 +209,7 @@
               Content="sub_Convert_Main"
               Foreground="White"
               FontSize="12"
-              VerticalAlignment="Center" />
+              VerticalAlignment="Center" Checked="subConvertMain_Checked" />
                     </StackPanel>
                 </Grid>
             </ScrollViewer>
